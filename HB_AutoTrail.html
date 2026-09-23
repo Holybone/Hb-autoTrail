@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HB AutoTrail — Every car has a story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     FIREBASE SDK (compat build — no build tools required)
+     ============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --asphalt:#1B1E24;
+    --asphalt-2:#262A32;
+    --paper:#F6F1E7;
+    --paper-2:#EFE7D6;
+    --ink:#2A2620;
+    --ink-soft:#5B554A;
+    --amber:#E8890C;
+    --amber-deep:#C56F05;
+    --teal:#1F6F6B;
+    --teal-deep:#175553;
+    --rust:#B54A3C;
+    --line:#DCD2BB;
+    --white:#FFFDF8;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  h1,h2,h3,h4,.display{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  a{color:inherit;}
+  button{font-family:'Inter',sans-serif;cursor:pointer;}
+  .hidden{display:none !important;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+  .narrow{max-width:640px;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    background:var(--asphalt);
+    border-bottom:3px solid var(--amber);
+    position:sticky;top:0;z-index:40;
+  }
+  header.top .bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;max-width:1080px;margin:0 auto;
+  }
+  .brand{
+    display:flex;align-items:baseline;gap:8px;color:var(--white);
+  }
+  .brand .hb{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;
+    background:var(--amber);color:var(--asphalt);
+    padding:3px 7px;border-radius:2px;letter-spacing:0.03em;
+  }
+  .brand .name{font-family:'Oswald',sans-serif;font-size:19px;letter-spacing:0.03em;}
+  header.top nav{display:flex;gap:10px;align-items:center;}
+  .btn{
+    display:inline-block;border:none;border-radius:var(--radius);
+    padding:10px 18px;font-size:14px;font-weight:600;
+    font-family:'Inter',sans-serif;letter-spacing:0.01em;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-amber{background:var(--amber);color:var(--asphalt);}
+  .btn-amber:hover{background:var(--amber-deep);}
+  .btn-ghost{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,0.3);}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amber);}
+  .btn-teal{background:var(--teal);color:var(--white);}
+  .btn-teal:hover{background:var(--teal-deep);}
+  .btn-outline{background:transparent;border:1.5px solid var(--ink);color:var(--ink);}
+  .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+  .btn-small{padding:7px 13px;font-size:13px;}
+  .btn-full{width:100%;}
+  .btn-danger-text{background:none;border:none;color:var(--rust);font-size:13px;font-weight:600;padding:6px 0;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:56px 0 40px;}
+  .hero-grid{
+    display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center;
+  }
+  @media (max-width:860px){ .hero-grid{grid-template-columns:1fr;} }
+  .kicker{
+    font-family:'Oswald',sans-serif;font-size:13px;color:var(--teal-deep);
+    letter-spacing:0.08em;margin-bottom:10px;font-weight:500;text-transform:none;
+  }
+  .hero h1{font-size:42px;line-height:1.08;margin-bottom:16px;}
+  @media (max-width:600px){ .hero h1{font-size:32px;} }
+  .hero h1 .accent{color:var(--amber-deep);}
+  .hero p.lede{font-size:17px;line-height:1.55;color:var(--ink-soft);margin-bottom:26px;max-width:46ch;}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+
+  /* ---------- OBD demo widget (the hero's live moment) ---------- */
+  .gauge-card{
+    background:var(--asphalt);border-radius:6px;padding:26px;
+    box-shadow:0 18px 40px -14px rgba(27,30,36,0.45);
+    border:1px solid #34383F;
+  }
+  .gauge-card .glabel{
+    color:#9AA0AC;font-size:12px;letter-spacing:0.08em;
+    font-family:'Oswald',sans-serif;margin-bottom:12px;
+  }
+  .gauge-card select{
+    width:100%;padding:12px 14px;border-radius:3px;border:1.5px solid #454B55;
+    background:#22262D;color:var(--white);font-size:15px;font-family:'Inter',sans-serif;
+    margin-bottom:14px;
+  }
+  .gauge-readout{
+    background:#22262D;border-radius:4px;padding:16px;
+    border-left:3px solid var(--amber);min-height:96px;
+  }
+  .gauge-readout .code-tag{
+    display:inline-block;background:var(--amber);color:var(--asphalt);
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;
+    padding:2px 8px;border-radius:2px;margin-bottom:8px;letter-spacing:0.03em;
+  }
+  .gauge-readout p{color:#D9DCE1;font-size:14.5px;line-height:1.55;margin:0;}
+  .gauge-readout .urgency{
+    display:inline-block;margin-top:10px;font-size:12px;font-weight:600;
+    padding:3px 9px;border-radius:2px;letter-spacing:0.02em;
+  }
+  .u-soon{background:rgba(232,137,12,0.18);color:#F5A83B;}
+  .u-now{background:rgba(181,74,60,0.22);color:#E27B6D;}
+  .u-watch{background:rgba(31,111,107,0.22);color:#5FC2BC;}
+  .gauge-foot{margin-top:14px;font-size:12.5px;color:#7A828F;}
+
+  /* ---------- Sections ---------- */
+  section{padding:48px 0;}
+  .section-head{margin-bottom:28px;max-width:56ch;}
+  .section-head h2{font-size:28px;margin-bottom:8px;}
+  .section-head p{color:var(--ink-soft);font-size:15.5px;line-height:1.55;}
+
+  /* ---------- AI showcase — job ticket style ---------- */
+  .tickets{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media (max-width:860px){ .tickets{grid-template-columns:1fr;} }
+  .ticket{
+    background:var(--white);border:1.5px dashed #C9BE9F;border-radius:4px;
+    padding:20px 18px;position:relative;
+  }
+  .ticket::before{
+    content:"AI PREVIEW";
+    position:absolute;top:-10px;left:16px;background:var(--teal);color:var(--white);
+    font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:0.07em;
+    padding:3px 9px;border-radius:2px;
+  }
+  .ticket .symptom{font-weight:600;font-size:14.5px;margin:10px 0 10px;color:var(--ink);}
+  .ticket .ai-say{
+    font-size:13.5px;line-height:1.55;color:var(--ink-soft);
+    border-top:1px solid var(--line);padding-top:10px;
+  }
+  .ticket .ai-say b{color:var(--ink);}
+  .showcase-cta{
+    margin-top:22px;background:var(--paper-2);border-radius:4px;padding:16px 18px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--line);
+  }
+  .showcase-cta p{margin:0;font-size:13.5px;color:var(--ink-soft);}
+  .showcase-cta strong{color:var(--ink);}
+
+  /* ---------- How it works ---------- */
+  .how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  @media (max-width:860px){ .how{grid-template-columns:1fr;} }
+  .how-item h3{font-size:17px;margin-bottom:8px;}
+  .how-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.55;margin:0;}
+  .how-item .mark{
+    width:34px;height:34px;border-radius:50%;background:var(--asphalt);
+    color:var(--amber);display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-size:14px;margin-bottom:12px;
+  }
+
+  /* ---------- Auth ---------- */
+  .auth-wrap{
+    background:var(--asphalt);border-radius:6px;padding:36px 30px;
+    color:var(--white);
+  }
+  .auth-wrap h2{color:var(--white);font-size:24px;margin-bottom:6px;}
+  .auth-wrap p.sub{color:#A9AFB9;font-size:14px;margin-bottom:22px;}
+  .tabs{display:flex;gap:2px;margin-bottom:20px;background:#262A32;border-radius:4px;padding:3px;}
+  .tab{
+    flex:1;text-align:center;padding:9px;border-radius:3px;font-size:13.5px;font-weight:600;
+    background:none;border:none;color:#8B92A0;
+  }
+  .tab.active{background:var(--amber);color:var(--asphalt);}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:#A9AFB9;margin-bottom:6px;letter-spacing:0.02em;}
+  .field input{
+    width:100%;padding:11px 13px;border-radius:3px;border:1.5px solid #454B55;
+    background:#22262D;color:var(--white);font-size:14.5px;font-family:'Inter',sans-serif;
+  }
+  .field input:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .auth-msg{font-size:13px;margin:10px 0;padding:9px 12px;border-radius:3px;}
+  .auth-msg.err{background:rgba(181,74,60,0.2);color:#E9998C;}
+  .auth-msg.ok{background:rgba(31,111,107,0.25);color:#7FD1CB;}
+
+  footer{background:var(--asphalt);color:#8B92A0;padding:28px 0;margin-top:20px;}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12.5px;}
+
+  /* ============================================================
+     APP (logged-in) VIEW
+     ============================================================ */
+  #appView{display:none;}
+  .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 62px);}
+  @media (max-width:800px){ .app-shell{grid-template-columns:1fr;} }
+  .side{background:var(--asphalt-2);color:var(--white);padding:22px 16px;}
+  .side .side-head{font-size:12px;letter-spacing:0.08em;color:#8B92A0;margin-bottom:12px;font-family:'Oswald',sans-serif;}
+  .vehicle-row{
+    display:block;width:100%;text-align:left;padding:11px 12px;border-radius:3px;
+    background:none;border:none;color:#C7CBD3;font-size:14px;margin-bottom:4px;
+  }
+  .vehicle-row.active{background:var(--amber);color:var(--asphalt);font-weight:600;}
+  .vehicle-row:hover:not(.active){background:#33383F;}
+  .side-divider{height:1px;background:#3A3F47;margin:16px 0;}
+
+  .main-panel{padding:26px 24px 60px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+  .panel-head h2{font-size:24px;}
+  .panel-head .meta{font-size:13.5px;color:var(--ink-soft);margin-top:4px;}
+
+  .reminder-banner{
+    border-radius:4px;padding:14px 16px;margin-bottom:20px;font-size:14px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  }
+  .reminder-banner.overdue{background:rgba(181,74,60,0.12);border:1px solid var(--rust);color:#8A362B;}
+  .reminder-banner.upcoming{background:rgba(232,137,12,0.12);border:1px solid var(--amber);color:#8A5A08;}
+
+  .card{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:18px;}
+  .card h3{font-size:15px;margin-bottom:14px;}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
+  .form-grid .full{grid-column:1/-1;}
+  .field2{margin-bottom:0;}
+  .field2 label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
+  .field2 input,.field2 select,.field2 textarea{
+    width:100%;padding:10px 12px;border-radius:3px;border:1.5px solid var(--line);
+    background:var(--paper);color:var(--ink);font-size:14px;font-family:'Inter',sans-serif;
+  }
+  .field2 textarea{min-height:64px;resize:vertical;}
+  .toggle-row{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);}
+
+  /* logbook line entries — not generic cards */
+  .logline{
+    border-bottom:1px solid var(--line);padding:14px 2px;
+    display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:start;
+  }
+  @media (max-width:600px){ .logline{grid-template-columns:1fr;gap:6px;} }
+  .logline:last-child{border-bottom:none;}
+  .logline .ldate{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);letter-spacing:0.01em;}
+  .logline .lbody .lissue{font-weight:600;font-size:14.5px;margin-bottom:3px;}
+  .logline .lbody .lmech{font-size:13px;color:var(--ink-soft);}
+  .logline .lcost{font-family:'Oswald',sans-serif;font-size:14px;text-align:right;white-space:nowrap;}
+  .badge{
+    display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:0.04em;
+    padding:2px 7px;border-radius:2px;margin-left:8px;vertical-align:middle;
+  }
+  .badge-resurfaced{background:rgba(181,74,60,0.15);color:var(--rust);}
+  .badge-resolved{background:rgba(31,111,107,0.15);color:var(--teal-deep);}
+
+  .empty-state{padding:30px 10px;text-align:center;color:var(--ink-soft);}
+  .empty-state p{font-size:14px;margin:6px 0 0;}
+
+  .obd-tool{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .obd-tool select{flex:1;min-width:200px;padding:10px 12px;border-radius:3px;border:1.5px solid var(--line);font-size:14px;}
+  .obd-result{background:var(--paper-2);border-left:3px solid var(--teal);border-radius:3px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:var(--ink);}
+
+  .coming-soon-strip{
+    background:var(--asphalt);color:var(--white);border-radius:4px;padding:16px 18px;
+    display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .coming-soon-strip p{margin:0;font-size:13.5px;color:#C7CBD3;}
+  .coming-soon-strip strong{color:var(--amber);}
+  .pill{display:inline-block;background:var(--amber);color:var(--asphalt);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;letter-spacing:0.02em;}
+
+  .top-user{display:flex;align-items:center;gap:12px;}
+  .top-user .who{color:#C7CBD3;font-size:13px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .btn, .vehicle-row{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="top">
+  <div class="bar">
+    <div class="brand"><span class="hb">HB</span><span class="name">AutoTrail</span></div>
+    <nav id="navLoggedOut">
+      <button class="btn btn-ghost btn-small" onclick="showAuth('login')">Sign in</button>
+      <button class="btn btn-amber btn-small" onclick="showAuth('signup')">Get started</button>
+    </nav>
+    <nav id="navLoggedIn" class="hidden top-user">
+      <span class="who" id="whoLabel"></span>
+      <button class="btn btn-ghost btn-small" onclick="doLogout()">Log out</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================================================
+     LANDING (logged out)
+     ============================================================ -->
+<main id="landingView">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="kicker">Built for Nigerian car owners, workshops &amp; fleets</div>
+        <h1>Every car has a story.<br>Stop <span class="accent">losing yours</span>.</h1>
+        <p class="lede">Log every service, every mechanic, every naira spent — so the next repair starts with the full history, not a guess. And when it's time to sell, hand over proof instead of promises.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-amber" onclick="showAuth('signup')">Start your car's logbook — free</button>
+          <button class="btn btn-outline" onclick="document.getElementById('showcase').scrollIntoView({behavior:'smooth'})">See the AI assistant</button>
+        </div>
+      </div>
+
+      <div class="gauge-card">
+        <div class="glabel">TRY IT — WHAT DOES YOUR WARNING LIGHT MEAN?</div>
+        <select id="obdHeroSelect" onchange="renderObdHero()"></select>
+        <div class="gauge-readout" id="obdHeroResult">
+          <p style="color:#7A828F;">Pick a code above to see a plain-English explanation — no account needed.</p>
+        </div>
+        <div class="gauge-foot">Free lookup covers 20 common codes. Describe-your-symptom diagnosis is part of AutoTrail's AI assistant, previewed below.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Meet the AI assistant</h2>
+        <p>Beyond code lookups, AutoTrail can reason through a described problem the way a good mechanic would talk you through it — in plain language, with a next step. Here's a taste of what it sounds like.</p>
+      </div>
+      <div class="tickets">
+        <div class="ticket">
+          <div class="symptom">"Car jerks when I accelerate, and check engine light just came on"</div>
+          <div class="ai-say"><b>Likely cause:</b> This pattern usually points to a misfire — often a worn spark plug or ignition coil rather than something major. <b>Do this first:</b> avoid hard acceleration until checked; ask your mechanic to scan for a misfire code before replacing anything.</div>
+        </div>
+        <div class="ticket">
+          <div class="symptom">"AC blows but not cold, especially in traffic"</div>
+          <div class="ai-say"><b>Likely cause:</b> Low refrigerant or a failing compressor clutch are the two most common causes of this exact pattern. <b>Do this first:</b> ask for a refrigerant pressure check — it's the cheaper fix to rule out before touching the compressor.</div>
+        </div>
+        <div class="ticket">
+          <div class="symptom">"Grinding sound when I brake, worse in the morning"</div>
+          <div class="ai-say"><b>Likely cause:</b> Worn brake pads are the most common explanation, but morning-only grinding can also mean surface rust on the rotor from overnight moisture. <b>Do this first:</b> have pad thickness checked — don't delay if the grinding is metal-on-metal.</div>
+        </div>
+      </div>
+      <div class="showcase-cta">
+        <p><strong>This is a preview.</strong> Free accounts get 2 real AI diagnoses on your own car's issues — no card required.</p>
+        <button class="btn btn-teal btn-small" onclick="showAuth('signup')">Create free account</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How AutoTrail works</h2>
+      </div>
+      <div class="how">
+        <div class="how-item">
+          <div class="mark">1</div>
+          <h3>Log it</h3>
+          <p>Every service, every repair — date, mechanic, cost, what was actually wrong. Takes under a minute per entry.</p>
+        </div>
+        <div class="how-item">
+          <div class="mark">2</div>
+          <h3>Track it</h3>
+          <p>See if an issue keeps coming back, when your next service is due, and which mechanic did what.</p>
+        </div>
+        <div class="how-item">
+          <div class="mark">3</div>
+          <h3>Prove it</h3>
+          <p>Selling the car? Hand the buyer a real history instead of asking them to trust your word.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="authSection">
+    <div class="wrap narrow">
+      <div class="auth-wrap">
+        <div class="tabs">
+          <button class="tab active" id="tabLogin" onclick="showAuth('login')">Sign in</button>
+          <button class="tab" id="tabSignup" onclick="showAuth('signup')">Get started</button>
+        </div>
+
+        <div id="loginForm">
+          <h2>Welcome back</h2>
+          <p class="sub">Sign in to see your vehicles.</p>
+          <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+          <div id="loginMsg"></div>
+          <button class="btn btn-amber btn-full" onclick="doLogin()">Sign in</button>
+          <button type="button" onclick="toggleResetPanel(true)" style="background:none;border:none;color:#A9AFB9;font-size:12.5px;margin-top:12px;text-decoration:underline;cursor:pointer;padding:0;">Forgot password?</button>
+
+          <div id="resetPanel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid #3A3F47;">
+            <p class="sub" style="margin-bottom:12px;">Enter your email and we'll send a link to reset your password.</p>
+            <div class="field"><label>Email</label><input type="email" id="resetEmail" placeholder="you@example.com"></div>
+            <div id="resetMsg"></div>
+            <button class="btn btn-teal btn-full" onclick="doPasswordReset()">Send reset link</button>
+            <button type="button" onclick="toggleResetPanel(false)" style="background:none;border:none;color:#A9AFB9;font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;padding:0;">Back to sign in</button>
+          </div>
+        </div>
+
+        <div id="signupForm" class="hidden">
+          <h2>Start your logbook</h2>
+          <p class="sub">Free. No card required. Takes 30 seconds.</p>
+          <div class="field"><label>Your name</label><input type="text" id="signupName" placeholder="Full name"></div>
+          <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" id="signupPassword" placeholder="At least 6 characters"></div>
+          <div id="signupMsg"></div>
+          <button class="btn btn-amber btn-full" onclick="doSignup()">Create free account</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     APP (logged in)
+     ============================================================ -->
+<div id="appView">
+  <div class="app-shell">
+    <aside class="side">
+      <div class="side-head">MY VEHICLES</div>
+      <div id="vehicleList"></div>
+      <button class="btn btn-ghost btn-small" style="margin-top:8px;width:100%;" onclick="openAddVehicle()">+ Add vehicle</button>
+      <div class="side-divider"></div>
+      <button class="vehicle-row" onclick="showTool('obd')">OBD code lookup</button>
+      <button class="vehicle-row" onclick="showTool('ai')">AI assistant</button>
+    </aside>
+
+    <div class="main-panel">
+
+      <!-- Add vehicle card -->
+      <div class="card hidden" id="addVehicleCard">
+        <h3>Add a vehicle</h3>
+        <div class="form-grid">
+          <div class="field2"><label>Make</label><input id="vMake" placeholder="e.g. Toyota"></div>
+          <div class="field2"><label>Model</label><input id="vModel" placeholder="e.g. Corolla"></div>
+          <div class="field2"><label>Year</label><input id="vYear" placeholder="e.g. 2015"></div>
+          <div class="field2"><label>Plate number</label><input id="vPlate" placeholder="e.g. LND-234-XY"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;">
+          <button class="btn btn-amber btn-small" onclick="saveVehicle()">Save vehicle</button>
+          <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddVehicle()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Vehicle file view -->
+      <div id="vehiclePanel" class="hidden">
+        <div class="panel-head">
+          <div>
+            <h2 id="vTitle">—</h2>
+            <div class="meta" id="vMeta">—</div>
+          </div>
+          <button class="btn btn-teal btn-small" onclick="openAddRecord()">+ Log a service / repair</button>
+        </div>
+
+        <div id="reminderSlot"></div>
+
+        <!-- Add record card -->
+        <div class="card hidden" id="addRecordCard">
+          <h3>Log a service or repair</h3>
+          <div class="form-grid">
+            <div class="field2"><label>Date</label><input type="date" id="rDate"></div>
+            <div class="field2"><label>Cost (₦)</label><input type="number" id="rCost" placeholder="e.g. 15000"></div>
+            <div class="field2 full"><label>Mechanic / workshop name</label><input id="rMechanic" placeholder="e.g. Chidi's Auto, Ikeja"></div>
+            <div class="field2 full"><label>What was the issue?</label><textarea id="rIssue" placeholder="e.g. Replaced front brake pads — grinding noise"></textarea></div>
+            <div class="field2"><label>Category</label>
+              <select id="rCategory">
+                <option>Routine service</option>
+                <option>Repair</option>
+                <option>Inspection</option>
+                <option>Tyres</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field2"><label>Next service due (optional)</label><input type="date" id="rNextDue"></div>
+            <div class="field2 full toggle-row">
+              <input type="checkbox" id="rResurfaced"> <label for="rResurfaced" style="margin:0;">This is the same issue coming back from a previous repair</label>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;">
+            <button class="btn btn-amber btn-small" onclick="saveRecord()">Save record</button>
+            <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddRecord()">Cancel</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Service history</h3>
+          <div id="recordList"></div>
+        </div>
+      </div>
+
+      <!-- OBD tool panel -->
+      <div id="obdPanel" class="hidden">
+        <div class="panel-head"><h2>OBD code lookup</h2></div>
+        <div class="card">
+          <div class="obd-tool">
+            <select id="obdAppSelect" onchange="renderObdApp()"></select>
+          </div>
+          <div class="obd-result" id="obdAppResult">Pick a code to see what it means.</div>
+        </div>
+      </div>
+
+      <!-- AI panel -->
+      <div id="aiPanel" class="hidden">
+        <div class="panel-head"><h2>AI assistant <span class="pill">2 free left</span></h2></div>
+        <div class="card">
+          <h3>Describe what's happening</h3>
+          <div class="field2 full" style="margin-bottom:12px;">
+            <textarea id="aiSymptom" placeholder="e.g. My car overheats only in traffic, fine on the highway..." style="min-height:90px;"></textarea>
+          </div>
+          <button class="btn btn-teal btn-small" onclick="tryAiDemo()">Get a diagnosis</button>
+          <div id="aiResult" style="margin-top:14px;"></div>
+        </div>
+        <div class="coming-soon-strip">
+          <p>Live, personalized AI diagnosis tied to your car's actual history is <strong>coming soon</strong> — this panel currently shows preview responses.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" id="noVehicleState">
+        <h3 style="font-family:'Oswald',sans-serif;font-size:16px;">No vehicle selected</h3>
+        <p>Add your first vehicle from the left to start logging its history.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>HB AutoTrail — built in Lagos, for Nigerian roads.</span>
+    <span>Your data stays yours.</span>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   FIREBASE CONFIG — REPLACE WITH YOUR OWN PROJECT VALUES
+   ============================================================
+   1. Go to https://console.firebase.google.com
+   2. Create a project (any name, e.g. "hb-autotrail")
+   3. Click the </> (web app) icon to register a web app
+   4. Copy the firebaseConfig object it gives you and paste below
+   5. In the left menu: Build → Authentication → Get started →
+      enable "Email/Password" sign-in method
+   6. In the left menu: Build → Firestore Database → Create database
+      → start in TEST MODE for now (we'll tighten rules later)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDosSiADx-mANhI7GDabc9qhWv-hYFOYtw",
+  authDomain: "hb-autotrail.firebaseapp.com",
+  projectId: "hb-autotrail",
+  storageBucket: "hb-autotrail.firebasestorage.app",
+  messagingSenderId: "61047108571",
+  appId: "1:61047108571:web:7d1f8129649f2ba794edfe"
+};
+
+let auth, db;
+let firebaseReady = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  firebaseReady = true;
+}catch(e){
+  console.warn("Firebase not configured yet — app running in preview mode.", e);
+}
+
+/* ============================================================
+   OBD CODE DATA (static, free tier — no AI call, zero cost)
+   ============================================================ */
+const OBD_CODES = [
+  {code:"P0100", title:"Mass Air Flow sensor issue", urgency:"soon",
+   text:"The sensor that measures incoming air isn't reading correctly, which can cause rough idling or poor fuel use. Usually a cleaning or replacement of the sensor fixes it — not an emergency, but get it looked at soon."},
+  {code:"P0128", title:"Engine running cooler than it should", urgency:"watch",
+   text:"The engine isn't reaching its normal operating temperature fast enough — often just a worn thermostat. Not dangerous, but worth fixing as it affects fuel economy and heater performance."},
+  {code:"P0171", title:"Engine running too lean (Bank 1)", urgency:"soon",
+   text:"Too much air or too little fuel is reaching the engine. Could be a vacuum leak, dirty sensor, or fuel delivery issue. Get it checked before it causes engine strain."},
+  {code:"P0172", title:"Engine running too rich (Bank 1)", urgency:"soon",
+   text:"Too much fuel relative to air — you may notice poor mileage or a fuel smell. Ask your mechanic to check the oxygen sensor and fuel injectors."},
+  {code:"P0174", title:"Engine running too lean (Bank 2)", urgency:"soon",
+   text:"Same as P0171 but on the other bank of cylinders (relevant for V6/V8 engines). Often linked — ask to have both checked together."},
+  {code:"P0175", title:"Engine running too rich (Bank 2)", urgency:"soon",
+   text:"Same as P0172 but on the other bank of cylinders. Usually points to the same underlying fuel or sensor issue as P0172."},
+  {code:"P0217", title:"Engine overheating", urgency:"now",
+   text:"Your engine is running hotter than is safe. Stop driving as soon as it's safe to do so — continuing to drive can cause serious engine damage. Check coolant level once the engine is cool."},
+  {code:"P0230", title:"Fuel pump circuit problem", urgency:"now",
+   text:"An electrical fault in the fuel pump circuit — this can cause stalling or failure to start. Have it inspected before your next long trip."},
+  {code:"P0300", title:"Random or multiple cylinder misfire", urgency:"soon",
+   text:"Several cylinders are misfiring — you'll likely feel jerking or rough running. Often spark plugs, coils, or fuel delivery. Avoid hard acceleration until checked."},
+  {code:"P0301", title:"Cylinder 1 misfire", urgency:"soon",
+   text:"One specific cylinder isn't firing properly — commonly a worn spark plug or ignition coil on that cylinder. Not usually an emergency, but fuel economy and performance will suffer until fixed."},
+  {code:"P0302", title:"Cylinder 2 misfire", urgency:"soon",
+   text:"Same as P0301, on cylinder 2. Same likely causes and same advice — get spark plugs and coils checked."},
+  {code:"P0303", title:"Cylinder 3 misfire", urgency:"soon",
+   text:"Same pattern as P0301, on cylinder 3. Spark plug or ignition coil are the usual suspects."},
+  {code:"P0304", title:"Cylinder 4 misfire", urgency:"soon",
+   text:"Same pattern as P0301, on cylinder 4. Ask your mechanic to check plugs and coils on that specific cylinder first."},
+  {code:"P0325", title:"Knock sensor problem", urgency:"watch",
+   text:"The sensor that detects engine \"knocking\" isn't reading correctly. The engine can usually still run safely, but have this checked to protect against undetected engine knock."},
+  {code:"P0335", title:"Crankshaft position sensor issue", urgency:"now",
+   text:"This sensor is important for the engine to run at all — a failure can cause stalling or difficulty starting. Don't ignore repeated stalling with this code present."},
+  {code:"P0420", title:"Catalytic converter below efficiency", urgency:"watch",
+   text:"Your catalytic converter isn't cleaning exhaust as well as it should. Not an immediate danger to drive, but it will eventually fail emissions checks and may need replacement."},
+  {code:"P0442", title:"Small fuel vapor leak", urgency:"watch",
+   text:"A small leak in the evaporative emissions system — often just a loose or faulty fuel cap. Check that your fuel cap is tightened properly first before assuming a bigger repair."},
+  {code:"P0455", title:"Large fuel vapor leak", urgency:"soon",
+   text:"A more significant leak in the evaporative emissions system. Start by checking the fuel cap, then have the fuel system inspected if the code returns."},
+  {code:"P0505", title:"Idle control system issue", urgency:"soon",
+   text:"The system that controls your engine's idle speed isn't working correctly — you may notice the engine idling too high, too low, or unevenly. Have the idle control valve checked."},
+  {code:"P0601", title:"Internal computer memory error", urgency:"soon",
+   text:"The car's own computer detected an internal fault. This is less about your engine and more about the control module itself — it usually needs a specialist diagnostic tool to resolve."}
+];
+
+function populateObdSelect(selectEl){
+  selectEl.innerHTML = '<option value="">Select a code or symptom…</option>' +
+    OBD_CODES.map(c => `<option value="${c.code}">${c.code} — ${c.title}</option>`).join('');
+}
+function urgencyLabel(u){
+  if(u==="now") return '<span class="urgency u-now">Get it checked soon — don\'t delay</span>';
+  if(u==="soon") return '<span class="urgency u-soon">Worth checking this week</span>';
+  return '<span class="urgency u-watch">Not urgent — keep an eye on it</span>';
+}
+function renderObdHero(){
+  const sel = document.getElementById('obdHeroSelect');
+  const c = OBD_CODES.find(x=>x.code===sel.value);
+  const box = document.getElementById('obdHeroResult');
+  if(!c){ box.innerHTML = '<p style="color:#7A828F;">Pick a code above to see a plain-English explanation — no account needed.</p>'; return; }
+  box.innerHTML = `<span class="code-tag">${c.code}</span><p><b style="color:#fff;">${c.title}.</b> ${c.text}</p>${urgencyLabel(c.urgency)}`;
+}
+function renderObdApp(){
+  const sel = document.getElementById('obdAppSelect');
+  const c = OBD_CODES.find(x=>x.code===sel.value);
+  const box = document.getElementById('obdAppResult');
+  if(!c){ box.textContent = 'Pick a code to see what it means.'; return; }
+  box.innerHTML = `<b>${c.code} — ${c.title}.</b><br>${c.text}<br>${urgencyLabel(c.urgency)}`;
+}
+
+/* ============================================================
+   AI PANEL — DEMO / PREVIEW MODE
+   Live AI diagnosis on a user's real, typed-in symptom is a
+   V1.5 feature (needs a secure backend function to protect the
+   API key). This demo shows matched canned responses so the
+   panel is honest about being a preview, per the plan discussed.
+   ============================================================ */
+const AI_DEMO_RESPONSES = [
+  {match:["overheat","hot","temperature"],
+   text:"This sounds like it could be a cooling issue — possibly low coolant, a failing water pump, or a blocked radiator, especially if it's worse in traffic. <b>Do this first:</b> check coolant level once the engine is cool, and don't keep driving if the temperature gauge is in the red."},
+  {match:["brake","grind","squeal"],
+   text:"Grinding or squealing when braking usually points to worn brake pads, sometimes rotor rust if it's worse in the morning. <b>Do this first:</b> have pad thickness checked — don't delay if it's a metal grinding sound."},
+  {match:["ac","air condition","cooling","cold"],
+   text:"AC blowing warm, especially worse in traffic, is commonly low refrigerant or a failing compressor clutch. <b>Do this first:</b> ask for a refrigerant pressure check — it's the cheaper thing to rule out first."},
+  {match:["misfire","jerk","shake","rough idle"],
+   text:"Jerking or rough running like this is often a misfire — worn spark plugs or an ignition coil are the usual first suspects. <b>Do this first:</b> avoid hard acceleration and ask your mechanic to scan for a misfire code."},
+];
+function tryAiDemo(){
+  const txt = document.getElementById('aiSymptom').value.toLowerCase();
+  const box = document.getElementById('aiResult');
+  if(!txt.trim()){ box.innerHTML = '<p style="color:var(--ink-soft);font-size:13.5px;">Type a short description first.</p>'; return; }
+  const hit = AI_DEMO_RESPONSES.find(r => r.match.some(m => txt.includes(m)));
+  const responseText = hit ? hit.text :
+    "This is a preview response — the live assistant (coming soon) will reason through symptoms it hasn't seen a canned example for, using your car's actual service history for context.";
+  box.innerHTML = `<div class="obd-result">${responseText}</div>`;
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function showAuth(which){
+  document.getElementById('tabLogin').classList.toggle('active', which==='login');
+  document.getElementById('tabSignup').classList.toggle('active', which==='signup');
+  document.getElementById('loginForm').classList.toggle('hidden', which!=='login');
+  document.getElementById('signupForm').classList.toggle('hidden', which!=='signup');
+  document.getElementById('authSection').scrollIntoView({behavior:'smooth'});
+}
+function setMsg(id, text, ok){
+  const el = document.getElementById(id);
+  el.innerHTML = text ? `<div class="auth-msg ${ok?'ok':'err'}">${text}</div>` : '';
+}
+function doSignup(){
+  if(!firebaseReady){ setMsg('signupMsg','Firebase isn\'t connected yet — add your config at the top of this file.',false); return; }
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPassword').value;
+  if(!name || !email || pw.length<6){ setMsg('signupMsg','Fill in your name, email, and a password of at least 6 characters.',false); return; }
+  auth.createUserWithEmailAndPassword(email, pw)
+    .then(cred => cred.user.updateProfile({displayName:name}))
+    .then(()=> db.collection('users').doc(auth.currentUser.uid).set({name, email, createdAt: firebase.firestore.FieldValue.serverTimestamp(), aiTrialsUsed:0}))
+    .catch(err => setMsg('signupMsg', err.message, false));
+}
+function doLogin(){
+  if(!firebaseReady){ setMsg('loginMsg','Firebase isn\'t connected yet — add your config at the top of this file.',false); return; }
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPassword').value;
+  auth.signInWithEmailAndPassword(email, pw).catch(err => setMsg('loginMsg', err.message, false));
+}
+function doLogout(){ auth.signOut(); }
+
+function toggleResetPanel(show){
+  document.getElementById('resetPanel').classList.toggle('hidden', !show);
+  setMsg('resetMsg', '', false);
+  if(show){ document.getElementById('resetEmail').value = document.getElementById('loginEmail').value; }
+}
+function doPasswordReset(){
+  if(!firebaseReady){ setMsg('resetMsg','Firebase isn\'t connected yet — add your config at the top of this file.',false); return; }
+  const email = document.getElementById('resetEmail').value.trim();
+  if(!email){ setMsg('resetMsg','Enter your email first.',false); return; }
+  auth.sendPasswordResetEmail(email)
+    .then(()=> setMsg('resetMsg','Reset link sent — check your inbox (and spam folder).',true))
+    .catch(err => setMsg('resetMsg', err.message, false));
+}
+
+if(firebaseReady){
+  auth.onAuthStateChanged(user => {
+    if(user){
+      document.getElementById('landingView').style.display='none';
+      document.getElementById('appView').style.display='block';
+      document.getElementById('navLoggedOut').classList.add('hidden');
+      document.getElementById('navLoggedIn').classList.remove('hidden');
+      document.getElementById('whoLabel').textContent = user.displayName || user.email;
+      loadVehicles();
+    } else {
+      document.getElementById('landingView').style.display='block';
+      document.getElementById('appView').style.display='none';
+      document.getElementById('navLoggedOut').classList.remove('hidden');
+      document.getElementById('navLoggedIn').classList.add('hidden');
+    }
+  });
+}
+
+/* ============================================================
+   VEHICLES & SERVICE RECORDS
+   ============================================================ */
+let currentVehicleId = null;
+let vehiclesCache = [];
+
+function openAddVehicle(){ document.getElementById('addVehicleCard').classList.remove('hidden'); }
+function closeAddVehicle(){ document.getElementById('addVehicleCard').classList.add('hidden'); }
+
+function saveVehicle(){
+  const make = document.getElementById('vMake').value.trim();
+  const model = document.getElementById('vModel').value.trim();
+  const year = document.getElementById('vYear').value.trim();
+  const plate = document.getElementById('vPlate').value.trim();
+  if(!make || !model){ alert('At least make and model are needed.'); return; }
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').add({
+    make, model, year, plate, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    ['vMake','vModel','vYear','vPlate'].forEach(id=>document.getElementById(id).value='');
+    closeAddVehicle();
+    loadVehicles();
+  });
+}
+
+function loadVehicles(){
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').orderBy('createdAt','desc').get().then(snap=>{
+    vehiclesCache = [];
+    snap.forEach(doc => vehiclesCache.push({id:doc.id, ...doc.data()}));
+    renderVehicleList();
+    if(vehiclesCache.length && !currentVehicleId){ selectVehicle(vehiclesCache[0].id); }
+    if(!vehiclesCache.length){ document.getElementById('noVehicleState').classList.remove('hidden'); }
+  });
+}
+function renderVehicleList(){
+  const wrap = document.getElementById('vehicleList');
+  wrap.innerHTML = vehiclesCache.map(v =>
+    `<button class="vehicle-row ${v.id===currentVehicleId?'active':''}" onclick="selectVehicle('${v.id}')">${v.make} ${v.model} <span style="opacity:.6;">'${String(v.year).slice(-2)}</span></button>`
+  ).join('');
+}
+function showTool(tool){
+  currentVehicleId = null;
+  renderVehicleList();
+  document.getElementById('vehiclePanel').classList.add('hidden');
+  document.getElementById('noVehicleState').classList.add('hidden');
+  document.getElementById('obdPanel').classList.toggle('hidden', tool!=='obd');
+  document.getElementById('aiPanel').classList.toggle('hidden', tool!=='ai');
+}
+function selectVehicle(id){
+  currentVehicleId = id;
+  renderVehicleList();
+  document.getElementById('obdPanel').classList.add('hidden');
+  document.getElementById('aiPanel').classList.add('hidden');
+  document.getElementById('noVehicleState').classList.add('hidden');
+  document.getElementById('vehiclePanel').classList.remove('hidden');
+  const v = vehiclesCache.find(x=>x.id===id);
+  document.getElementById('vTitle').textContent = `${v.make} ${v.model} (${v.year})`;
+  document.getElementById('vMeta').textContent = v.plate ? `Plate: ${v.plate}` : '';
+  loadRecords(id);
+}
+
+function openAddRecord(){ document.getElementById('addRecordCard').classList.remove('hidden'); }
+function closeAddRecord(){ document.getElementById('addRecordCard').classList.add('hidden'); }
+
+function saveRecord(){
+  const uid = auth.currentUser.uid;
+  const date = document.getElementById('rDate').value;
+  const cost = document.getElementById('rCost').value;
+  const mechanic = document.getElementById('rMechanic').value.trim();
+  const issue = document.getElementById('rIssue').value.trim();
+  const category = document.getElementById('rCategory').value;
+  const nextDue = document.getElementById('rNextDue').value;
+  const resurfaced = document.getElementById('rResurfaced').checked;
+  if(!date || !issue){ alert('Date and issue description are required.'); return; }
+  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('records').add({
+    date, cost: cost?Number(cost):null, mechanic, issue, category, nextDue: nextDue||null, resurfaced,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    ['rDate','rCost','rMechanic','rIssue','rNextDue'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('rResurfaced').checked=false;
+    closeAddRecord();
+    loadRecords(currentVehicleId);
+  });
+}
+
+function loadRecords(vehicleId){
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').doc(vehicleId).collection('records')
+    .orderBy('date','desc').get().then(snap=>{
+      const records = [];
+      snap.forEach(doc => records.push({id:doc.id, ...doc.data()}));
+      renderRecords(records);
+      renderReminder(records);
+    });
+}
+function renderRecords(records){
+  const wrap = document.getElementById('recordList');
+  if(!records.length){
+    wrap.innerHTML = '<div class="empty-state"><p>No service history logged yet for this vehicle. Add the first one above.</p></div>';
+    return;
+  }
+  wrap.innerHTML = records.map(r => `
+    <div class="logline">
+      <div class="ldate">${r.date}</div>
+      <div class="lbody">
+        <div class="lissue">${r.issue}${r.resurfaced?'<span class="badge badge-resurfaced">RESURFACED</span>':''}</div>
+        <div class="lmech">${r.mechanic || 'Mechanic not recorded'} · ${r.category||''}</div>
+      </div>
+      <div class="lcost">${r.cost ? '₦'+Number(r.cost).toLocaleString() : '—'}</div>
+    </div>
+  `).join('');
+}
+function renderReminder(records){
+  const slot = document.getElementById('reminderSlot');
+  const withDue = records.filter(r=>r.nextDue).sort((a,b)=> a.nextDue.localeCompare(b.nextDue));
+  if(!withDue.length){ slot.innerHTML=''; return; }
+  const next = withDue[0];
+  const today = new Date().toISOString().slice(0,10);
+  const daysAway = Math.round((new Date(next.nextDue) - new Date(today)) / 86400000);
+  if(daysAway < 0){
+    slot.innerHTML = `<div class="reminder-banner overdue"><span><b>Overdue:</b> next service was due ${next.nextDue}.</span></div>`;
+  } else if(daysAway <= 14){
+    slot.innerHTML = `<div class="reminder-banner upcoming"><span><b>Coming up:</b> next service due ${next.nextDue} (${daysAway} day${daysAway===1?'':'s'} away).</span></div>`;
+  } else {
+    slot.innerHTML = '';
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+populateObdSelect(document.getElementById('obdHeroSelect'));
+populateObdSelect(document.getElementById('obdAppSelect'));
+</script>
+</body>
+</html>
