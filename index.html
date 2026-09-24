@@ -30,21 +30,27 @@
 
 <style>
   :root{
-    --asphalt:#1B1E24;
-    --asphalt-2:#262A32;
-    --paper:#F6F1E7;
-    --paper-2:#EFE7D6;
-    --ink:#2A2620;
-    --ink-soft:#5B554A;
-    --amber:#E8890C;
-    --amber-deep:#C56F05;
-    --teal:#1F6F6B;
-    --teal-deep:#175553;
-    --rust:#B54A3C;
+    --asphalt:#0D1118;
+    --asphalt-2:#171D28;
+    --asphalt-3:#212938;
+    --paper:#F3F1EC;
+    --paper-2:#E8E4D8;
+    --ink:#201C16;
+    --ink-soft:#6B6459;
+    --amber:#FF9E1B;
+    --amber-deep:#E8850A;
+    --amber-glow:rgba(255,158,27,0.55);
+    --teal:#0FE0C4;
+    --teal-deep:#0BB8A0;
+    --teal-glow:rgba(15,224,196,0.5);
+    --rust:#FF4D4D;
+    --rust-deep:#E63333;
+    --rust-glow:rgba(255,77,77,0.5);
     --line:#DCD2BB;
     --white:#FFFDF8;
     --surface:#FFFDF8;
-    --radius:3px;
+    --radius:6px;
+    --sheen:linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 35%, rgba(255,255,255,0) 60%);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -72,8 +78,11 @@
 
   /* ---------- Header ---------- */
   header.top{
-    background:var(--asphalt);
-    border-bottom:3px solid var(--amber);
+    background:rgba(13,17,24,0.85);
+    backdrop-filter:blur(14px) saturate(160%);
+    -webkit-backdrop-filter:blur(14px) saturate(160%);
+    border-bottom:1px solid rgba(255,158,27,0.35);
+    box-shadow:0 1px 24px -4px rgba(255,158,27,0.18);
     position:sticky;top:0;z-index:40;
   }
   header.top .bar{
@@ -92,19 +101,24 @@
   header.top nav{display:flex;gap:10px;align-items:center;}
   .btn{
     display:inline-block;border:none;border-radius:var(--radius);
-    padding:10px 18px;font-size:14px;font-weight:600;
+    padding:11px 19px;font-size:14px;font-weight:700;
     font-family:'Inter',sans-serif;letter-spacing:0.01em;
-    transition:transform .12s ease, box-shadow .12s ease;
+    position:relative;overflow:hidden;
+    transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .22s ease, background .18s ease;
   }
-  .btn:active{transform:translateY(1px);}
-  .btn-amber{background:var(--amber);color:var(--asphalt);}
-  .btn-amber:hover{background:var(--amber-deep);}
-  .btn-ghost{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,0.3);}
-  .btn-ghost:hover{border-color:var(--amber);color:var(--amber);}
-  .btn-teal{background:var(--teal);color:var(--white);}
-  .btn-teal:hover{background:var(--teal-deep);}
+  .btn::before{
+    content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:var(--sheen);pointer-events:none;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(0px) scale(0.98);}
+  .btn-amber{background:linear-gradient(155deg, #FFB23E, var(--amber) 55%, var(--amber-deep));color:#241400;box-shadow:0 4px 18px -4px var(--amber-glow);}
+  .btn-amber:hover{box-shadow:0 8px 28px -4px var(--amber-glow), 0 0 0 1px rgba(255,158,27,0.4);}
+  .btn-ghost{background:rgba(255,255,255,0.04);color:var(--white);border:1.5px solid rgba(255,255,255,0.25);backdrop-filter:blur(6px);}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amber);box-shadow:0 0 16px -4px var(--amber-glow);}
+  .btn-teal{background:linear-gradient(155deg, #4EFCE3, var(--teal) 55%, var(--teal-deep));color:#00251F;box-shadow:0 4px 18px -4px var(--teal-glow);}
+  .btn-teal:hover{box-shadow:0 8px 28px -4px var(--teal-glow), 0 0 0 1px rgba(15,224,196,0.4);}
   .btn-outline{background:transparent;border:1.5px solid var(--ink);color:var(--ink);}
-  .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+  .btn-outline:hover{border-color:var(--teal-deep);color:var(--teal-deep);box-shadow:0 0 14px -6px var(--teal-glow);}
   .btn-small{padding:7px 13px;font-size:13px;}
   .btn-full{width:100%;}
   .btn-danger-text{background:none;border:none;color:var(--rust);font-size:13px;font-weight:600;padding:6px 0;}
@@ -112,9 +126,11 @@
   /* ---------- Hero ---------- */
   .hero{padding:56px 0 40px;}
   .hero-grid{
-    display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center;
+    display:flex;gap:44px;align-items:center;
   }
-  @media (max-width:860px){ .hero-grid{grid-template-columns:1fr;} }
+  .hero-grid > div:first-child{flex:1.05;min-width:0;}
+  .hero-grid > .gauge-card{flex:1;min-width:0;}
+  @media (max-width:860px){ .hero-grid{flex-direction:column;} }
   .kicker{
     font-family:'Oswald',sans-serif;font-size:13px;color:var(--teal-deep);
     letter-spacing:0.08em;margin-bottom:10px;font-weight:500;text-transform:none;
@@ -166,8 +182,9 @@
   .section-head p{color:var(--ink-soft);font-size:15.5px;line-height:1.55;}
 
   /* ---------- AI showcase — job ticket style ---------- */
-  .tickets{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-  @media (max-width:860px){ .tickets{grid-template-columns:1fr;} }
+  .tickets{display:flex;flex-wrap:wrap;gap:18px;}
+  .tickets > .ticket{flex:1 1 260px;}
+  @media (max-width:860px){ .tickets > .ticket{flex:1 1 100%;} }
   .ticket{
     background:var(--surface);border:1.5px dashed #C9BE9F;border-radius:4px;
     padding:20px 18px;position:relative;
@@ -193,8 +210,9 @@
   .showcase-cta strong{color:var(--ink);}
 
   /* ---------- How it works ---------- */
-  .how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
-  @media (max-width:860px){ .how{grid-template-columns:1fr;} }
+  .how{display:flex;flex-wrap:wrap;gap:24px;}
+  .how > .how-item{flex:1 1 220px;}
+  @media (max-width:860px){ .how > .how-item{flex:1 1 100%;} }
   .how-item h3{font-size:17px;margin-bottom:8px;}
   .how-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.55;margin:0;}
   .how-item .mark{
@@ -234,8 +252,10 @@
      APP (logged-in) VIEW
      ============================================================ */
   #appView{display:none;}
-  .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 62px);}
-  @media (max-width:800px){ .app-shell{grid-template-columns:1fr;} }
+  .app-shell{display:flex;min-height:calc(100vh - 62px);}
+  .app-shell > .side{flex:0 0 260px;}
+  .app-shell > .main-panel{flex:1;min-width:0;}
+  @media (max-width:800px){ .app-shell{flex-direction:column;} .app-shell > .side{flex:0 0 auto;} }
   .side{background:var(--asphalt-2);color:var(--white);padding:22px 16px;}
   .side .side-head{font-size:12px;letter-spacing:0.08em;color:#8B92A0;margin-bottom:12px;font-family:'Oswald',sans-serif;}
   .vehicle-row{
@@ -261,9 +281,10 @@
   .card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:18px;}
   .card h3{font-size:15px;margin-bottom:14px;}
 
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  @media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
-  .form-grid .full{grid-column:1/-1;}
+  .form-grid{display:flex;flex-wrap:wrap;gap:12px;}
+  .form-grid > .field2{flex:1 1 calc(50% - 6px);}
+  .form-grid .full{flex:1 1 100%;}
+  @media (max-width:600px){ .form-grid > .field2{flex:1 1 100%;} }
   .field2{margin-bottom:0;}
   .field2 label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
   .field2 input,.field2 select,.field2 textarea{
@@ -276,9 +297,11 @@
   /* logbook line entries — not generic cards */
   .logline{
     border-bottom:1px solid var(--line);padding:14px 2px;
-    display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:start;
+    display:flex;gap:14px;align-items:flex-start;
   }
-  @media (max-width:600px){ .logline{grid-template-columns:1fr;gap:6px;} }
+  .logline .ldate{flex:0 0 90px;}
+  .logline .lbody{flex:1;min-width:0;}
+  @media (max-width:600px){ .logline{flex-direction:column;gap:6px;} .logline .ldate{flex:0 0 auto;} }
   .logline:last-child{border-bottom:none;}
   .logline .ldate{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);letter-spacing:0.01em;}
   .logline .lbody .lissue{font-weight:600;font-size:14.5px;margin-bottom:3px;}
@@ -326,12 +349,41 @@
   }
   html[data-theme="dark"] body{background:var(--paper);color:var(--ink);}
   html[data-theme="dark"] .card,
-  html[data-theme="dark"] .ticket,
-  html[data-theme="dark"] .stat-card{background:var(--surface);border-color:var(--line);}
+  html[data-theme="dark"] .ticket{background:var(--surface);border-color:var(--line);}
   html[data-theme="dark"] .field2 input,
   html[data-theme="dark"] .field2 select,
   html[data-theme="dark"] .field2 textarea{background:var(--paper-2);color:var(--ink);border-color:var(--line);}
   html[data-theme="dark"] .gauge-readout p{color:#D9DCE1;}
+
+  /* ============================================================
+     CAR DASHBOARD THEMES — original palettes, not tied to any
+     real car brand. Toggled via data-car="..." on <html>.
+     Default (no attribute) = Amber Classic, already in :root.
+     ============================================================ */
+  html[data-car="electric-blue"]{
+    --amber:#2E9EFF; --amber-deep:#1B7FE0; --amber-glow:rgba(46,158,255,0.55);
+    --teal:#7CFFF0; --teal-deep:#4DE8D4; --teal-glow:rgba(124,255,240,0.5);
+    --rust:#FF4D6D; --rust-deep:#E63357; --rust-glow:rgba(255,77,109,0.5);
+    --asphalt:#0A0F1C; --asphalt-2:#131B2E; --asphalt-3:#1C2740;
+  }
+  html[data-car="racing-red"]{
+    --amber:#FF2E44; --amber-deep:#E01530; --amber-glow:rgba(255,46,68,0.55);
+    --teal:#FFD60A; --teal-deep:#E0BC00; --teal-glow:rgba(255,214,10,0.5);
+    --rust:#FF7A1A; --rust-deep:#E6650A; --rust-glow:rgba(255,122,26,0.5);
+    --asphalt:#120607; --asphalt-2:#1D0C0D; --asphalt-3:#2A1113;
+  }
+  html[data-car="racing-green"]{
+    --amber:#17C77F; --amber-deep:#0FA868; --amber-glow:rgba(23,199,127,0.5);
+    --teal:#D4AF37; --teal-deep:#B8952E; --teal-glow:rgba(212,175,55,0.5);
+    --rust:#E8532C; --rust-deep:#D1431F; --rust-glow:rgba(232,83,44,0.5);
+    --asphalt:#0A1410; --asphalt-2:#132019; --asphalt-3:#1C2E23;
+  }
+  html[data-car="midnight-purple"]{
+    --amber:#A855F7; --amber-deep:#9333EA; --amber-glow:rgba(168,85,247,0.55);
+    --teal:#22D3EE; --teal-deep:#0FB8D4; --teal-glow:rgba(34,211,238,0.5);
+    --rust:#FB7185; --rust-deep:#E85A70; --rust-glow:rgba(251,113,133,0.5);
+    --asphalt:#12081D; --asphalt-2:#1C1030; --asphalt-3:#281745;
+  }
   .theme-toggle{
     background:none;border:1.5px solid rgba(255,255,255,0.3);color:var(--white);
     border-radius:var(--radius);padding:7px 11px;font-size:13px;cursor:pointer;
@@ -341,12 +393,26 @@
   /* ============================================================
      DASHBOARD (home view on login)
      ============================================================ */
-  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
-  @media (max-width:700px){ .stat-grid{grid-template-columns:1fr;} }
-  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px;}
-  .stat-card .slabel{font-size:12px;color:var(--ink-soft);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;}
-  .stat-card .sval{font-family:'Oswald',sans-serif;font-size:26px;color:var(--ink);}
-  .stat-card .sval.warn{color:var(--rust);}
+  .stat-grid{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:22px;}
+  .stat-grid > .gauge-card-stat{flex:1 1 200px;}
+  @media (max-width:700px){ .stat-grid > .gauge-card-stat{flex:1 1 100%;} }
+  .gauge-card-stat{
+    background:linear-gradient(165deg, var(--asphalt-3), var(--asphalt));
+    border:1px solid rgba(255,158,27,0.18);
+    border-radius:16px;padding:22px 16px 18px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    position:relative;overflow:hidden;
+    transition:transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s ease, border-color .25s ease;
+  }
+  .gauge-card-stat::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:var(--sheen);pointer-events:none;}
+  .gauge-card-stat:hover{transform:translateY(-3px);box-shadow:0 16px 34px -14px rgba(0,0,0,0.5);border-color:rgba(255,158,27,0.4);}
+  .gauge-ring-wrap{position:relative;width:118px;height:118px;margin-bottom:8px;}
+  .gauge-ring-wrap svg{transform:rotate(-90deg);display:block;}
+  .gauge-ring-track{fill:none;stroke:rgba(255,255,255,0.09);stroke-width:9;}
+  .gauge-ring-fill{fill:none;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 7px currentColor);transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.3,1);}
+  .gauge-center{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .gauge-value{font-family:'Oswald',sans-serif;font-size:24px;color:var(--white);text-shadow:0 0 16px currentColor;letter-spacing:0.01em;}
+  .gauge-sublabel{font-size:10.5px;color:#8A92A0;letter-spacing:0.07em;text-transform:uppercase;margin-top:8px;}
 
   .dash-reminders{display:flex;flex-direction:column;gap:8px;}
   .dash-reminder-row{
@@ -428,6 +494,64 @@
     #printReport th, #printReport td{border:1px solid #ccc;padding:6px 8px;text-align:left;}
     #printReport tfoot td{font-weight:700;}
   }
+
+  /* ============================================================
+     SUPPORT WIDGET — floating help button, always reachable
+     ============================================================ */
+  .support-fab{
+    position:fixed;bottom:20px;right:20px;z-index:60;
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(155deg, #FFB23E, var(--amber) 60%, var(--amber-deep));
+    color:#241400;border:none;font-size:22px;font-weight:700;
+    box-shadow:0 6px 22px -4px var(--amber-glow), 0 0 0 1px rgba(255,255,255,0.15);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:transform .2s cubic-bezier(.2,.8,.3,1);
+  }
+  .support-fab:hover{transform:scale(1.08) translateY(-2px);}
+  .support-panel{
+    position:fixed;bottom:82px;right:20px;z-index:60;width:280px;
+    background:linear-gradient(165deg, var(--asphalt-3), var(--asphalt));
+    border:1px solid rgba(255,158,27,0.25);border-radius:14px;
+    padding:18px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.6);
+    color:var(--white);
+  }
+  .support-panel h4{color:var(--white);font-size:15px;margin-bottom:4px;}
+  .support-panel p{color:#A9AFB9;font-size:12.5px;margin:0 0 14px;line-height:1.5;}
+  .support-link{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    color:var(--white);text-decoration:none;font-size:13.5px;font-weight:600;margin-bottom:8px;
+    transition:background .18s ease, border-color .18s ease;
+  }
+  .support-link:last-child{margin-bottom:0;}
+  .support-link:hover{background:rgba(255,158,27,0.1);border-color:var(--amber);}
+  .support-link .sicon{font-size:16px;}
+  @media (max-width:480px){
+    .support-fab{bottom:16px;right:16px;width:48px;height:48px;font-size:19px;}
+    .support-panel{bottom:74px;right:14px;left:14px;width:auto;}
+  }
+
+  /* ============================================================
+     CAR THEME PICKER
+     ============================================================ */
+  .theme-panel{
+    position:absolute;top:52px;right:20px;z-index:55;width:240px;
+    background:linear-gradient(165deg, var(--asphalt-3), var(--asphalt));
+    border:1px solid rgba(255,158,27,0.25);border-radius:12px;
+    padding:14px;box-shadow:0 20px 44px -14px rgba(0,0,0,0.55);
+  }
+  .theme-panel h5{color:var(--white);font-size:12.5px;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 10px;}
+  .swatch-row{display:flex;flex-direction:column;gap:4px;}
+  .swatch-btn{
+    display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:8px;
+    background:none;border:1px solid transparent;cursor:pointer;text-align:left;width:100%;
+    transition:background .15s ease;
+  }
+  .swatch-btn:hover{background:rgba(255,255,255,0.06);}
+  .swatch-btn.active{border-color:rgba(255,255,255,0.35);background:rgba(255,255,255,0.08);}
+  .swatch-dots{display:flex;gap:3px;flex-shrink:0;}
+  .swatch-dot{width:11px;height:11px;border-radius:50%;box-shadow:0 0 6px currentColor;}
+  .swatch-btn .swname{color:var(--white);font-size:12.5px;font-weight:600;}
 </style>
 </head>
 <body>
@@ -439,15 +563,42 @@
   <div class="bar">
     <div class="brand"><span class="hb">HB</span><span class="name">AutoTrail</span></div>
     <nav id="navLoggedOut">
+      <button class="theme-toggle" onclick="toggleThemePanel()" id="paletteToggleOut" title="Dashboard style">🎨</button>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleOut" title="Toggle dark mode">🌙</button>
       <button class="btn btn-ghost btn-small" onclick="showAuth('login')">Sign in</button>
       <button class="btn btn-amber btn-small" onclick="showAuth('signup')">Get started</button>
     </nav>
     <nav id="navLoggedIn" class="hidden top-user">
+      <button class="theme-toggle" onclick="toggleThemePanel()" id="paletteToggleIn" title="Dashboard style">🎨</button>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleIn" title="Toggle dark mode">🌙</button>
       <span class="who" id="whoLabel"></span>
       <button class="btn btn-ghost btn-small" onclick="doLogout()">Log out</button>
     </nav>
+  </div>
+  <div class="theme-panel hidden" id="themePanel">
+    <h5>Dashboard style</h5>
+    <div class="swatch-row" id="swatchRow">
+      <button class="swatch-btn" data-car="" onclick="applyCarTheme('')">
+        <span class="swatch-dots"><span class="swatch-dot" style="background:#FF9E1B;color:#FF9E1B;"></span><span class="swatch-dot" style="background:#0FE0C4;color:#0FE0C4;"></span></span>
+        <span class="swname">Amber Classic</span>
+      </button>
+      <button class="swatch-btn" data-car="electric-blue" onclick="applyCarTheme('electric-blue')">
+        <span class="swatch-dots"><span class="swatch-dot" style="background:#2E9EFF;color:#2E9EFF;"></span><span class="swatch-dot" style="background:#7CFFF0;color:#7CFFF0;"></span></span>
+        <span class="swname">Electric Blue</span>
+      </button>
+      <button class="swatch-btn" data-car="racing-red" onclick="applyCarTheme('racing-red')">
+        <span class="swatch-dots"><span class="swatch-dot" style="background:#FF2E44;color:#FF2E44;"></span><span class="swatch-dot" style="background:#FFD60A;color:#FFD60A;"></span></span>
+        <span class="swname">Racing Red</span>
+      </button>
+      <button class="swatch-btn" data-car="racing-green" onclick="applyCarTheme('racing-green')">
+        <span class="swatch-dots"><span class="swatch-dot" style="background:#17C77F;color:#17C77F;"></span><span class="swatch-dot" style="background:#D4AF37;color:#D4AF37;"></span></span>
+        <span class="swname">Racing Green</span>
+      </button>
+      <button class="swatch-btn" data-car="midnight-purple" onclick="applyCarTheme('midnight-purple')">
+        <span class="swatch-dots"><span class="swatch-dot" style="background:#A855F7;color:#A855F7;"></span><span class="swatch-dot" style="background:#22D3EE;color:#22D3EE;"></span></span>
+        <span class="swname">Midnight Purple</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -544,6 +695,9 @@
           <p class="sub">Sign in to see your vehicles.</p>
           <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
           <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+          <div class="toggle-row" style="color:#A9AFB9;margin-bottom:12px;">
+            <input type="checkbox" id="rememberMe"> <label for="rememberMe" style="margin:0;">Remember my email on this device</label>
+          </div>
           <div id="loginMsg"></div>
           <button class="btn btn-amber btn-full" onclick="doLogin()">Sign in</button>
           <button type="button" onclick="toggleResetPanel(true)" style="background:none;border:none;color:#A9AFB9;font-size:12.5px;margin-top:12px;text-decoration:underline;cursor:pointer;padding:0;">Forgot password?</button>
@@ -616,19 +770,10 @@
           </div>
         </div>
 
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div class="slabel">Vehicles</div>
-            <div class="sval" id="statVehicles">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="slabel">Total spent (all time)</div>
-            <div class="sval" id="statSpend">₦0</div>
-          </div>
-          <div class="stat-card">
-            <div class="slabel">Reminders due</div>
-            <div class="sval" id="statDue">0</div>
-          </div>
+        <div class="stat-grid" id="statGrid">
+          <div class="gauge-card-stat" id="gaugeVehicles"></div>
+          <div class="gauge-card-stat" id="gaugeSpend"></div>
+          <div class="gauge-card-stat" id="gaugeDue"></div>
         </div>
 
         <div class="card">
@@ -775,6 +920,22 @@
     <span>Your data stays yours.</span>
   </div>
 </footer>
+
+<!-- ============================================================
+     SUPPORT WIDGET — floating help, reachable from anywhere in the app
+     ============================================================ -->
+<button class="support-fab" onclick="toggleSupport()" title="Need help?">?</button>
+<div class="support-panel hidden" id="supportPanel">
+  <h4>Need a hand?</h4>
+  <p>Reach out directly — we usually reply within a day.</p>
+  <!-- Replace 234XXXXXXXXXX with the real support WhatsApp number -->
+  <a class="support-link" href="https://wa.me/234XXXXXXXXXX?text=Hi%2C%20I%20need%20help%20with%20HB%20AutoTrail" target="_blank" rel="noopener">
+    <span class="sicon">💬</span> Chat on WhatsApp
+  </a>
+  <a class="support-link" href="mailto:upspringerltd@gmail.com?subject=HB%20AutoTrail%20Support">
+    <span class="sicon">✉️</span> Email support
+  </a>
+</div>
 
 <script>
 /* ============================================================
@@ -935,9 +1096,27 @@ function doLogin(){
   if(!firebaseReady){ setMsg('loginMsg','Firebase isn\'t connected yet — add your config at the top of this file.',false); return; }
   const email = document.getElementById('loginEmail').value.trim();
   const pw = document.getElementById('loginPassword').value;
-  auth.signInWithEmailAndPassword(email, pw).catch(err => setMsg('loginMsg', err.message, false));
+  const remember = document.getElementById('rememberMe').checked;
+  auth.signInWithEmailAndPassword(email, pw)
+    .then(()=>{
+      // Only the email is ever stored — never the password.
+      try{
+        if(remember){ localStorage.setItem('hbat-remembered-email', email); }
+        else{ localStorage.removeItem('hbat-remembered-email'); }
+      }catch(e){ /* storage unavailable — login still succeeds, just won't be pre-filled next time */ }
+    })
+    .catch(err => setMsg('loginMsg', err.message, false));
 }
 function doLogout(){ auth.signOut(); }
+
+function initRememberedEmail(){
+  let saved = null;
+  try{ saved = localStorage.getItem('hbat-remembered-email'); }catch(e){}
+  if(saved){
+    document.getElementById('loginEmail').value = saved;
+    document.getElementById('rememberMe').checked = true;
+  }
+}
 
 function toggleResetPanel(show){
   document.getElementById('resetPanel').classList.toggle('hidden', !show);
@@ -995,6 +1174,28 @@ function updateThemeIcons(){
   const icon = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
   const a = document.getElementById('themeToggleOut'); if(a) a.textContent = icon;
   const b = document.getElementById('themeToggleIn'); if(b) b.textContent = icon;
+}
+
+/* ============================================================
+   CAR DASHBOARD THEME PICKER — persisted per device
+   ============================================================ */
+function initCarTheme(){
+  let saved = '';
+  try{ saved = localStorage.getItem('hbat-car-theme') || ''; }catch(e){}
+  applyCarTheme(saved, true);
+}
+function applyCarTheme(name, skipSave){
+  if(name){ document.documentElement.setAttribute('data-car', name); }
+  else{ document.documentElement.removeAttribute('data-car'); }
+  if(!skipSave){
+    try{ localStorage.setItem('hbat-car-theme', name); }catch(e){}
+  }
+  document.querySelectorAll('.swatch-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.getAttribute('data-car') === name);
+  });
+}
+function toggleThemePanel(){
+  document.getElementById('themePanel').classList.toggle('hidden');
 }
 
 /* ============================================================
@@ -1366,16 +1567,46 @@ function printVehicleReport(){
 }
 
 /* ---------- Dashboard (home view — aggregates across all vehicles) ---------- */
+/* ---------- Gauge dial rendering (the car-dashboard-style stat cards) ---------- */
+function renderGauge(containerId, fraction, colorHex, valueText, labelText){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const r = 50, circ = 2*Math.PI*r;
+  const clamped = Math.max(0, Math.min(fraction, 1));
+  el.innerHTML = `
+    <div class="gauge-ring-wrap" style="color:${colorHex};">
+      <svg viewBox="0 0 120 120" width="118" height="118">
+        <circle class="gauge-ring-track" cx="60" cy="60" r="${r}"></circle>
+        <circle class="gauge-ring-fill" id="${containerId}-ring" cx="60" cy="60" r="${r}"
+          stroke="${colorHex}" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"></circle>
+      </svg>
+      <div class="gauge-center">
+        <div class="gauge-value">${valueText}</div>
+      </div>
+    </div>
+    <div class="gauge-sublabel">${labelText}</div>
+  `;
+  // Animate the fill in on next frame so the CSS transition actually plays
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const ring = document.getElementById(containerId+'-ring');
+      if(ring) ring.style.strokeDashoffset = circ * (1 - clamped);
+    });
+  });
+}
+
 function loadDashboard(){
   const uid = auth.currentUser.uid;
-  document.getElementById('statVehicles').textContent = vehiclesCache.length;
   if(!vehiclesCache.length){
-    document.getElementById('statSpend').textContent = '₦0';
-    document.getElementById('statDue').textContent = '0';
+    renderGauge('gaugeVehicles', 0, '#FF9E1B', '0', 'Vehicles');
+    renderGauge('gaugeSpend', 0, '#0FE0C4', '₦0', 'Total spent');
+    renderGauge('gaugeDue', 0, '#0FE0C4', '0', 'Reminders due');
     document.getElementById('dashReminderList').innerHTML = '<div class="empty-state"><p>Add your first vehicle to get started.</p></div>';
     document.getElementById('dashVehicleList').innerHTML = '<div class="empty-state"><p>No vehicles yet.</p></div>';
     return;
   }
+  renderGauge('gaugeVehicles', Math.min(vehiclesCache.length/6, 1), '#FF9E1B', String(vehiclesCache.length), 'Vehicles');
+
   const fetches = vehiclesCache.map(v => {
     const vRef = db.collection('users').doc(uid).collection('vehicles').doc(v.id);
     return Promise.all([ vRef.collection('records').get(), vRef.collection('reminders').get() ])
@@ -1402,7 +1633,8 @@ function loadDashboard(){
       vehicleRows.push({vehicle, spend: vSpend});
     });
 
-    document.getElementById('statSpend').textContent = '₦'+totalSpend.toLocaleString();
+    // Spend gauge: fraction is decorative (scales against a rolling ₦500k reference) — the glow is the point, not a literal ratio
+    renderGauge('gaugeSpend', Math.min(totalSpend/500000, 1), '#0FE0C4', '₦'+totalSpend.toLocaleString(), 'Total spent');
 
     const today = new Date().toISOString().slice(0,10);
     const dueSorted = dueItems
@@ -1410,9 +1642,9 @@ function loadDashboard(){
       .filter(d=> d.daysAway <= 14)
       .sort((a,b)=> a.daysAway - b.daysAway);
 
-    const statDueEl = document.getElementById('statDue');
-    statDueEl.textContent = dueSorted.length;
-    statDueEl.className = dueSorted.some(d=>d.daysAway<0) ? 'sval warn' : 'sval';
+    const overdueCount = dueSorted.filter(d=>d.daysAway<0).length;
+    const dueColor = overdueCount > 0 ? '#FF4D4D' : (dueSorted.length ? '#FF9E1B' : '#0FE0C4');
+    renderGauge('gaugeDue', Math.min(dueSorted.length/5, 1), dueColor, String(dueSorted.length), 'Reminders due');
 
     const remWrap = document.getElementById('dashReminderList');
     if(!dueSorted.length){
@@ -1443,8 +1675,26 @@ function loadDashboard(){
    INIT
    ============================================================ */
 initTheme();
+initCarTheme();
+initRememberedEmail();
 populateObdSelect(document.getElementById('obdHeroSelect'));
 populateObdSelect(document.getElementById('obdAppSelect'));
+
+function toggleSupport(){
+  document.getElementById('supportPanel').classList.toggle('hidden');
+}
+document.addEventListener('click', (e)=>{
+  const panel = document.getElementById('supportPanel');
+  const fab = document.querySelector('.support-fab');
+  if(panel && !panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== fab){
+    panel.classList.add('hidden');
+  }
+  const themePanel = document.getElementById('themePanel');
+  const paletteButtons = [document.getElementById('paletteToggleOut'), document.getElementById('paletteToggleIn')];
+  if(themePanel && !themePanel.classList.contains('hidden') && !themePanel.contains(e.target) && !paletteButtons.includes(e.target)){
+    themePanel.classList.add('hidden');
+  }
+});
 </script>
 </body>
 </html>
