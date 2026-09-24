@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HB AutoTrail — Every car has a story</title>
+
+<!-- ============================================================
+     PWA — installable app support (manifest.json, sw.js, and the
+     three icon-*.png files must sit alongside this index.html in
+     the same folder/repo for these to work)
+     ============================================================ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B1E24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AutoTrail">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -29,6 +43,7 @@
     --rust:#B54A3C;
     --line:#DCD2BB;
     --white:#FFFDF8;
+    --surface:#FFFDF8;
     --radius:3px;
   }
   *{box-sizing:border-box;}
@@ -154,7 +169,7 @@
   .tickets{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
   @media (max-width:860px){ .tickets{grid-template-columns:1fr;} }
   .ticket{
-    background:var(--white);border:1.5px dashed #C9BE9F;border-radius:4px;
+    background:var(--surface);border:1.5px dashed #C9BE9F;border-radius:4px;
     padding:20px 18px;position:relative;
   }
   .ticket::before{
@@ -243,7 +258,7 @@
   .reminder-banner.overdue{background:rgba(181,74,60,0.12);border:1px solid var(--rust);color:#8A362B;}
   .reminder-banner.upcoming{background:rgba(232,137,12,0.12);border:1px solid var(--amber);color:#8A5A08;}
 
-  .card{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:18px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:18px;}
   .card h3{font-size:15px;margin-bottom:14px;}
 
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -297,6 +312,122 @@
   @media (prefers-reduced-motion: reduce){
     .btn, .vehicle-row{transition:none;}
   }
+
+  /* ============================================================
+     DARK MODE — toggled via data-theme="dark" on <html>
+     ============================================================ */
+  html[data-theme="dark"]{
+    --paper:#15171B;
+    --paper-2:#1D2026;
+    --ink:#EDEAE2;
+    --ink-soft:#A8A296;
+    --surface:#20242B;
+    --line:#33363D;
+  }
+  html[data-theme="dark"] body{background:var(--paper);color:var(--ink);}
+  html[data-theme="dark"] .card,
+  html[data-theme="dark"] .ticket,
+  html[data-theme="dark"] .stat-card{background:var(--surface);border-color:var(--line);}
+  html[data-theme="dark"] .field2 input,
+  html[data-theme="dark"] .field2 select,
+  html[data-theme="dark"] .field2 textarea{background:var(--paper-2);color:var(--ink);border-color:var(--line);}
+  html[data-theme="dark"] .gauge-readout p{color:#D9DCE1;}
+  .theme-toggle{
+    background:none;border:1.5px solid rgba(255,255,255,0.3);color:var(--white);
+    border-radius:var(--radius);padding:7px 11px;font-size:13px;cursor:pointer;
+  }
+  .theme-toggle:hover{border-color:var(--amber);color:var(--amber);}
+
+  /* ============================================================
+     DASHBOARD (home view on login)
+     ============================================================ */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+  @media (max-width:700px){ .stat-grid{grid-template-columns:1fr;} }
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px;}
+  .stat-card .slabel{font-size:12px;color:var(--ink-soft);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;}
+  .stat-card .sval{font-family:'Oswald',sans-serif;font-size:26px;color:var(--ink);}
+  .stat-card .sval.warn{color:var(--rust);}
+
+  .dash-reminders{display:flex;flex-direction:column;gap:8px;}
+  .dash-reminder-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:11px 14px;border-radius:3px;font-size:13.5px;
+  }
+  .dash-reminder-row.overdue{background:rgba(181,74,60,0.1);border:1px solid var(--rust);}
+  .dash-reminder-row.upcoming{background:rgba(232,137,12,0.1);border:1px solid var(--amber);}
+  .dash-reminder-row .dveh{font-weight:600;}
+  .dash-reminder-row button{background:none;border:none;color:var(--teal);font-size:12.5px;font-weight:600;cursor:pointer;}
+
+  .dash-vehicle-row{
+    display:flex;justify-content:space-between;align-items:center;padding:12px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .dash-vehicle-row:last-child{border-bottom:none;}
+  .dash-vehicle-row:hover{background:var(--paper-2);}
+  .dash-vehicle-row .dvname{font-weight:600;font-size:14.5px;}
+  .dash-vehicle-row .dvsub{font-size:12.5px;color:var(--ink-soft);}
+  .dash-vehicle-row .dvspend{font-family:'Oswald',sans-serif;font-size:14px;}
+
+  /* ============================================================
+     EXPENSE INSIGHTS
+     ============================================================ */
+  .cat-bar-row{margin-bottom:12px;}
+  .cat-bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;}
+  .cat-bar-label .camt{font-family:'Oswald',sans-serif;color:var(--ink-soft);}
+  .cat-bar-track{background:var(--paper-2);border-radius:20px;height:8px;overflow:hidden;}
+  .cat-bar-fill{background:var(--teal);height:100%;border-radius:20px;}
+
+  .month-bars{display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:8px;}
+  .month-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .month-bar{width:100%;background:var(--amber);border-radius:3px 3px 0 0;min-height:3px;}
+  .month-bar-label{font-size:10.5px;color:var(--ink-soft);margin-top:6px;text-align:center;}
+
+  /* ============================================================
+     EDIT/DELETE ICON BUTTONS
+     ============================================================ */
+  .icon-btn{
+    background:none;border:none;cursor:pointer;padding:4px 6px;font-size:13px;
+    color:var(--ink-soft);border-radius:3px;
+  }
+  .icon-btn:hover{background:var(--paper-2);color:var(--ink);}
+  .icon-btn.danger:hover{color:var(--rust);}
+  .logline-actions{display:flex;gap:2px;align-items:center;}
+  .vehicle-row-wrap{display:flex;align-items:center;gap:2px;}
+  .vehicle-row-wrap .vehicle-row{flex:1;}
+  .vehicle-row-wrap .icon-btn{color:#8B92A0;}
+  .vehicle-row-wrap .icon-btn:hover{background:#33383F;color:var(--white);}
+
+  /* ============================================================
+     REMINDERS (standalone, per vehicle)
+     ============================================================ */
+  .reminder-list-row{
+    display:flex;justify-content:space-between;align-items:center;padding:10px 0;
+    border-bottom:1px solid var(--line);font-size:13.5px;
+  }
+  .reminder-list-row:last-child{border-bottom:none;}
+
+  /* ============================================================
+     MILEAGE display
+     ============================================================ */
+  .lmiles{font-size:12px;color:var(--ink-soft);}
+
+  /* ============================================================
+     PRINT / PDF EXPORT — clean report, app chrome hidden
+     ============================================================ */
+  #printReport{display:none;}
+  @media print{
+    header.top, .side, .panel-head button, .card > button, .btn, .icon-btn,
+    .stat-grid, .dash-reminders, #reminderSlot, footer{ display:none !important; }
+    body{background:#fff;color:#000;}
+    .app-shell{display:block;}
+    .main-panel{padding:0;}
+    #printReport{display:block !important;}
+    #printReport h1{font-family:'Oswald',sans-serif;font-size:24px;margin-bottom:4px;}
+    #printReport .pr-meta{font-size:13px;color:#555;margin-bottom:20px;}
+    #printReport table{width:100%;border-collapse:collapse;font-size:12.5px;}
+    #printReport th, #printReport td{border:1px solid #ccc;padding:6px 8px;text-align:left;}
+    #printReport tfoot td{font-weight:700;}
+  }
 </style>
 </head>
 <body>
@@ -308,10 +439,12 @@
   <div class="bar">
     <div class="brand"><span class="hb">HB</span><span class="name">AutoTrail</span></div>
     <nav id="navLoggedOut">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleOut" title="Toggle dark mode">🌙</button>
       <button class="btn btn-ghost btn-small" onclick="showAuth('login')">Sign in</button>
       <button class="btn btn-amber btn-small" onclick="showAuth('signup')">Get started</button>
     </nav>
     <nav id="navLoggedIn" class="hidden top-user">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleIn" title="Toggle dark mode">🌙</button>
       <span class="who" id="whoLabel"></span>
       <button class="btn btn-ghost btn-small" onclick="doLogout()">Log out</button>
     </nav>
@@ -445,6 +578,7 @@
 <div id="appView">
   <div class="app-shell">
     <aside class="side">
+      <button class="vehicle-row" onclick="showTool('dashboard')" id="dashNavBtn" style="font-weight:600;margin-bottom:10px;">🏠 Dashboard</button>
       <div class="side-head">MY VEHICLES</div>
       <div id="vehicleList"></div>
       <button class="btn btn-ghost btn-small" style="margin-top:8px;width:100%;" onclick="openAddVehicle()">+ Add vehicle</button>
@@ -457,16 +591,56 @@
 
       <!-- Add vehicle card -->
       <div class="card hidden" id="addVehicleCard">
-        <h3>Add a vehicle</h3>
+        <h3 id="vehicleFormTitle">Add a vehicle</h3>
         <div class="form-grid">
           <div class="field2"><label>Make</label><input id="vMake" placeholder="e.g. Toyota"></div>
           <div class="field2"><label>Model</label><input id="vModel" placeholder="e.g. Corolla"></div>
           <div class="field2"><label>Year</label><input id="vYear" placeholder="e.g. 2015"></div>
           <div class="field2"><label>Plate number</label><input id="vPlate" placeholder="e.g. LND-234-XY"></div>
+          <div class="field2"><label>Current mileage (km) — optional</label><input type="number" id="vMileage" placeholder="e.g. 84000"></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:10px;">
-          <button class="btn btn-amber btn-small" onclick="saveVehicle()">Save vehicle</button>
+          <button class="btn btn-amber btn-small" onclick="saveVehicle()" id="vehicleSaveBtn">Save vehicle</button>
           <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddVehicle()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           DASHBOARD — home view shown by default after login
+           ============================================================ -->
+      <div id="dashboardPanel">
+        <div class="panel-head">
+          <div>
+            <h2>Dashboard</h2>
+            <div class="meta">Everything across your household, at a glance.</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="slabel">Vehicles</div>
+            <div class="sval" id="statVehicles">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Total spent (all time)</div>
+            <div class="sval" id="statSpend">₦0</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Reminders due</div>
+            <div class="sval" id="statDue">0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Upcoming &amp; overdue</h3>
+          <div class="dash-reminders" id="dashReminderList">
+            <div class="empty-state"><p>Loading…</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Your vehicles</h3>
+          <div id="dashVehicleList"></div>
         </div>
       </div>
 
@@ -477,14 +651,17 @@
             <h2 id="vTitle">—</h2>
             <div class="meta" id="vMeta">—</div>
           </div>
-          <button class="btn btn-teal btn-small" onclick="openAddRecord()">+ Log a service / repair</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="editVehicle()">Edit vehicle</button>
+            <button class="btn btn-teal btn-small" onclick="openAddRecord()">+ Log a service / repair</button>
+          </div>
         </div>
 
         <div id="reminderSlot"></div>
 
-        <!-- Add record card -->
+        <!-- Add/edit record card -->
         <div class="card hidden" id="addRecordCard">
-          <h3>Log a service or repair</h3>
+          <h3 id="recordFormTitle">Log a service or repair</h3>
           <div class="form-grid">
             <div class="field2"><label>Date</label><input type="date" id="rDate"></div>
             <div class="field2"><label>Cost (₦)</label><input type="number" id="rCost" placeholder="e.g. 15000"></div>
@@ -499,19 +676,52 @@
                 <option>Other</option>
               </select>
             </div>
+            <div class="field2"><label>Mileage at this service (km) — optional</label><input type="number" id="rMileage" placeholder="e.g. 85500"></div>
             <div class="field2"><label>Next service due (optional)</label><input type="date" id="rNextDue"></div>
             <div class="field2 full toggle-row">
               <input type="checkbox" id="rResurfaced"> <label for="rResurfaced" style="margin:0;">This is the same issue coming back from a previous repair</label>
             </div>
           </div>
           <div style="margin-top:14px;display:flex;gap:10px;">
-            <button class="btn btn-amber btn-small" onclick="saveRecord()">Save record</button>
+            <button class="btn btn-amber btn-small" onclick="saveRecord()" id="recordSaveBtn">Save record</button>
             <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddRecord()">Cancel</button>
           </div>
         </div>
 
+        <!-- Standalone reminder card -->
+        <div class="card hidden" id="addReminderCard">
+          <h3>Set a reminder</h3>
+          <div class="form-grid">
+            <div class="field2 full"><label>What's it for?</label><input id="remLabel" placeholder="e.g. Tyre rotation"></div>
+            <div class="field2"><label>Due date</label><input type="date" id="remDate"></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;">
+            <button class="btn btn-amber btn-small" onclick="saveReminder()">Save reminder</button>
+            <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddReminder()">Cancel</button>
+          </div>
+        </div>
+
         <div class="card">
-          <h3>Service history</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+            <h3 style="margin:0;">Reminders</h3>
+            <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="openAddReminder()">+ Set reminder</button>
+          </div>
+          <div id="reminderListBox"></div>
+        </div>
+
+        <div class="card">
+          <h3>Expense insights</h3>
+          <div id="expenseInsightsBox"></div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <h3 style="margin:0;">Service history</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="exportRecordsCSV()">Export CSV</button>
+              <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="printVehicleReport()">Print / Save PDF</button>
+            </div>
+          </div>
           <div id="recordList"></div>
         </div>
       </div>
@@ -543,12 +753,19 @@
         </div>
       </div>
 
-      <div class="empty-state" id="noVehicleState">
-        <h3 style="font-family:'Oswald',sans-serif;font-size:16px;">No vehicle selected</h3>
-        <p>Add your first vehicle from the left to start logging its history.</p>
+      <!-- Print-only report (hidden on screen, shown only when printing) -->
+      <div id="printReport">
+        <h1>HB AutoTrail — Service History</h1>
+        <div class="pr-meta" id="printMeta"></div>
+        <table>
+          <thead><tr><th>Date</th><th>Mechanic</th><th>Issue</th><th>Category</th><th>Mileage</th><th>Cost</th></tr></thead>
+          <tbody id="printTableBody"></tbody>
+          <tfoot><tr><td colspan="5">Total</td><td id="printTotal"></td></tr></tfoot>
+        </table>
       </div>
 
     </div>
+
   </div>
 </div>
 
@@ -755,69 +972,183 @@ if(firebaseReady){
 }
 
 /* ============================================================
+   THEME (dark mode) — persisted per device via localStorage
+   ============================================================ */
+function initTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem('hbat-theme'); } catch(e){ /* private browsing or blocked storage — fall back to light, no crash */ }
+  if(saved === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); }
+  updateThemeIcons();
+}
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if(isDark){
+    document.documentElement.removeAttribute('data-theme');
+    try{ localStorage.setItem('hbat-theme','light'); }catch(e){}
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    try{ localStorage.setItem('hbat-theme','dark'); }catch(e){}
+  }
+  updateThemeIcons();
+}
+function updateThemeIcons(){
+  const icon = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+  const a = document.getElementById('themeToggleOut'); if(a) a.textContent = icon;
+  const b = document.getElementById('themeToggleIn'); if(b) b.textContent = icon;
+}
+
+/* ============================================================
+   PWA — register the service worker for the installable app shell.
+   Safe to attempt even before sw.js is uploaded; it just fails
+   quietly (caught below) until the file exists alongside index.html.
+   ============================================================ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker not registered yet (expected until sw.js is hosted):', err.message));
+  });
+}
+
+/* ============================================================
    VEHICLES & SERVICE RECORDS
    ============================================================ */
 let currentVehicleId = null;
 let vehiclesCache = [];
+let recordsCache = [];
+let remindersCache = [];
+let editingVehicleId = null;
+let editingRecordId = null;
 
-function openAddVehicle(){ document.getElementById('addVehicleCard').classList.remove('hidden'); }
-function closeAddVehicle(){ document.getElementById('addVehicleCard').classList.add('hidden'); }
+function openAddVehicle(){
+  editingVehicleId = null;
+  document.getElementById('vehicleFormTitle').textContent = 'Add a vehicle';
+  document.getElementById('vehicleSaveBtn').textContent = 'Save vehicle';
+  ['vMake','vModel','vYear','vPlate','vMileage'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addVehicleCard').classList.remove('hidden');
+}
+function closeAddVehicle(){ document.getElementById('addVehicleCard').classList.add('hidden'); editingVehicleId=null; }
+
+function editVehicle(){
+  const v = vehiclesCache.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  editingVehicleId = v.id;
+  document.getElementById('vehicleFormTitle').textContent = 'Edit vehicle';
+  document.getElementById('vehicleSaveBtn').textContent = 'Save changes';
+  document.getElementById('vMake').value = v.make || '';
+  document.getElementById('vModel').value = v.model || '';
+  document.getElementById('vYear').value = v.year || '';
+  document.getElementById('vPlate').value = v.plate || '';
+  document.getElementById('vMileage').value = v.mileage || '';
+  document.getElementById('addVehicleCard').classList.remove('hidden');
+  document.getElementById('addVehicleCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function saveVehicle(){
   const make = document.getElementById('vMake').value.trim();
   const model = document.getElementById('vModel').value.trim();
   const year = document.getElementById('vYear').value.trim();
   const plate = document.getElementById('vPlate').value.trim();
+  const mileage = document.getElementById('vMileage').value;
   if(!make || !model){ alert('At least make and model are needed.'); return; }
   const uid = auth.currentUser.uid;
-  db.collection('users').doc(uid).collection('vehicles').add({
-    make, model, year, plate, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(()=>{
-    ['vMake','vModel','vYear','vPlate'].forEach(id=>document.getElementById(id).value='');
+  const data = { make, model, year, plate, mileage: mileage?Number(mileage):null };
+  const ref = db.collection('users').doc(uid).collection('vehicles');
+  const savePromise = editingVehicleId
+    ? ref.doc(editingVehicleId).update(data)
+    : ref.add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+  savePromise.then(()=>{
+    ['vMake','vModel','vYear','vPlate','vMileage'].forEach(id=>document.getElementById(id).value='');
+    const wasEditing = editingVehicleId;
+    editingVehicleId = null;
     closeAddVehicle();
+    loadVehicles().then(()=>{ if(wasEditing) selectVehicle(wasEditing); });
+  });
+}
+
+function deleteVehicle(id, name){
+  if(!confirm(`Delete ${name}? This removes all its service history and reminders too. This cannot be undone.`)) return;
+  const uid = auth.currentUser.uid;
+  const vRef = db.collection('users').doc(uid).collection('vehicles').doc(id);
+  Promise.all([
+    vRef.collection('records').get().then(snap => Promise.all(snap.docs.map(d=>d.ref.delete()))),
+    vRef.collection('reminders').get().then(snap => Promise.all(snap.docs.map(d=>d.ref.delete())))
+  ]).then(()=> vRef.delete()).then(()=>{
+    if(currentVehicleId === id){ currentVehicleId = null; }
     loadVehicles();
   });
 }
 
 function loadVehicles(){
   const uid = auth.currentUser.uid;
-  db.collection('users').doc(uid).collection('vehicles').orderBy('createdAt','desc').get().then(snap=>{
+  return db.collection('users').doc(uid).collection('vehicles').orderBy('createdAt','desc').get().then(snap=>{
     vehiclesCache = [];
     snap.forEach(doc => vehiclesCache.push({id:doc.id, ...doc.data()}));
     renderVehicleList();
-    if(vehiclesCache.length && !currentVehicleId){ selectVehicle(vehiclesCache[0].id); }
-    if(!vehiclesCache.length){ document.getElementById('noVehicleState').classList.remove('hidden'); }
+    if(!currentVehicleId){ showTool('dashboard'); }
   });
 }
 function renderVehicleList(){
   const wrap = document.getElementById('vehicleList');
-  wrap.innerHTML = vehiclesCache.map(v =>
-    `<button class="vehicle-row ${v.id===currentVehicleId?'active':''}" onclick="selectVehicle('${v.id}')">${v.make} ${v.model} <span style="opacity:.6;">'${String(v.year).slice(-2)}</span></button>`
-  ).join('');
+  wrap.innerHTML = vehiclesCache.map(v => `
+    <div class="vehicle-row-wrap">
+      <button class="vehicle-row ${v.id===currentVehicleId?'active':''}" onclick="selectVehicle('${v.id}')">${v.make} ${v.model} <span style="opacity:.6;">'${String(v.year).slice(-2)}</span></button>
+      <button class="icon-btn danger" title="Delete vehicle" onclick="deleteVehicle('${v.id}', '${(v.make+' '+v.model).replace(/'/g,"\\'")}')">✕</button>
+    </div>
+  `).join('');
 }
 function showTool(tool){
   currentVehicleId = null;
   renderVehicleList();
   document.getElementById('vehiclePanel').classList.add('hidden');
-  document.getElementById('noVehicleState').classList.add('hidden');
+  document.getElementById('dashboardPanel').classList.add('hidden');
   document.getElementById('obdPanel').classList.toggle('hidden', tool!=='obd');
   document.getElementById('aiPanel').classList.toggle('hidden', tool!=='ai');
+  if(tool === 'dashboard'){
+    document.getElementById('dashboardPanel').classList.remove('hidden');
+    loadDashboard();
+  }
 }
 function selectVehicle(id){
   currentVehicleId = id;
   renderVehicleList();
   document.getElementById('obdPanel').classList.add('hidden');
   document.getElementById('aiPanel').classList.add('hidden');
-  document.getElementById('noVehicleState').classList.add('hidden');
+  document.getElementById('dashboardPanel').classList.add('hidden');
   document.getElementById('vehiclePanel').classList.remove('hidden');
   const v = vehiclesCache.find(x=>x.id===id);
   document.getElementById('vTitle').textContent = `${v.make} ${v.model} (${v.year})`;
-  document.getElementById('vMeta').textContent = v.plate ? `Plate: ${v.plate}` : '';
+  document.getElementById('vMeta').textContent = [v.plate?`Plate: ${v.plate}`:null, v.mileage?`${Number(v.mileage).toLocaleString()} km`:null].filter(Boolean).join(' · ') || '—';
   loadRecords(id);
+  loadReminders(id);
 }
 
-function openAddRecord(){ document.getElementById('addRecordCard').classList.remove('hidden'); }
-function closeAddRecord(){ document.getElementById('addRecordCard').classList.add('hidden'); }
+/* ---------- Service records ---------- */
+function openAddRecord(){
+  editingRecordId = null;
+  document.getElementById('recordFormTitle').textContent = 'Log a service or repair';
+  document.getElementById('recordSaveBtn').textContent = 'Save record';
+  ['rDate','rCost','rMechanic','rIssue','rMileage','rNextDue'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rResurfaced').checked = false;
+  document.getElementById('addRecordCard').classList.remove('hidden');
+}
+function closeAddRecord(){ document.getElementById('addRecordCard').classList.add('hidden'); editingRecordId=null; }
+
+function editRecord(id){
+  const r = recordsCache.find(x=>x.id===id);
+  if(!r) return;
+  editingRecordId = id;
+  document.getElementById('recordFormTitle').textContent = 'Edit record';
+  document.getElementById('recordSaveBtn').textContent = 'Save changes';
+  document.getElementById('rDate').value = r.date || '';
+  document.getElementById('rCost').value = r.cost || '';
+  document.getElementById('rMechanic').value = r.mechanic || '';
+  document.getElementById('rIssue').value = r.issue || '';
+  document.getElementById('rCategory').value = r.category || 'Routine service';
+  document.getElementById('rMileage').value = r.mileage || '';
+  document.getElementById('rNextDue').value = r.nextDue || '';
+  document.getElementById('rResurfaced').checked = !!r.resurfaced;
+  document.getElementById('addRecordCard').classList.remove('hidden');
+  document.getElementById('addRecordCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function saveRecord(){
   const uid = auth.currentUser.uid;
@@ -826,28 +1157,40 @@ function saveRecord(){
   const mechanic = document.getElementById('rMechanic').value.trim();
   const issue = document.getElementById('rIssue').value.trim();
   const category = document.getElementById('rCategory').value;
+  const mileage = document.getElementById('rMileage').value;
   const nextDue = document.getElementById('rNextDue').value;
   const resurfaced = document.getElementById('rResurfaced').checked;
   if(!date || !issue){ alert('Date and issue description are required.'); return; }
-  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('records').add({
-    date, cost: cost?Number(cost):null, mechanic, issue, category, nextDue: nextDue||null, resurfaced,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(()=>{
-    ['rDate','rCost','rMechanic','rIssue','rNextDue'].forEach(id=>document.getElementById(id).value='');
+  const data = { date, cost: cost?Number(cost):null, mechanic, issue, category, mileage: mileage?Number(mileage):null, nextDue: nextDue||null, resurfaced };
+  const ref = db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('records');
+  const savePromise = editingRecordId
+    ? ref.doc(editingRecordId).update(data)
+    : ref.add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+  savePromise.then(()=>{
+    ['rDate','rCost','rMechanic','rIssue','rMileage','rNextDue'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('rResurfaced').checked=false;
+    editingRecordId = null;
     closeAddRecord();
     loadRecords(currentVehicleId);
   });
 }
 
+function deleteRecord(id){
+  if(!confirm('Delete this service record? This cannot be undone.')) return;
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('records').doc(id).delete()
+    .then(()=> loadRecords(currentVehicleId));
+}
+
 function loadRecords(vehicleId){
   const uid = auth.currentUser.uid;
-  db.collection('users').doc(uid).collection('vehicles').doc(vehicleId).collection('records')
+  return db.collection('users').doc(uid).collection('vehicles').doc(vehicleId).collection('records')
     .orderBy('date','desc').get().then(snap=>{
-      const records = [];
-      snap.forEach(doc => records.push({id:doc.id, ...doc.data()}));
-      renderRecords(records);
-      renderReminder(records);
+      recordsCache = [];
+      snap.forEach(doc => recordsCache.push({id:doc.id, ...doc.data()}));
+      renderRecords(recordsCache);
+      renderExpenseInsights(recordsCache);
+      refreshReminderBanner();
     });
 }
 function renderRecords(records){
@@ -862,30 +1205,244 @@ function renderRecords(records){
       <div class="lbody">
         <div class="lissue">${r.issue}${r.resurfaced?'<span class="badge badge-resurfaced">RESURFACED</span>':''}</div>
         <div class="lmech">${r.mechanic || 'Mechanic not recorded'} · ${r.category||''}</div>
+        ${r.mileage ? `<div class="lmiles">${Number(r.mileage).toLocaleString()} km</div>` : ''}
       </div>
-      <div class="lcost">${r.cost ? '₦'+Number(r.cost).toLocaleString() : '—'}</div>
+      <div style="text-align:right;">
+        <div class="lcost">${r.cost ? '₦'+Number(r.cost).toLocaleString() : '—'}</div>
+        <div class="logline-actions">
+          <button class="icon-btn" title="Edit" onclick="editRecord('${r.id}')">✎</button>
+          <button class="icon-btn danger" title="Delete" onclick="deleteRecord('${r.id}')">✕</button>
+        </div>
+      </div>
     </div>
   `).join('');
 }
-function renderReminder(records){
+
+/* ---------- Standalone reminders ---------- */
+function openAddReminder(){
+  ['remLabel','remDate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addReminderCard').classList.remove('hidden');
+}
+function closeAddReminder(){ document.getElementById('addReminderCard').classList.add('hidden'); }
+
+function saveReminder(){
+  const uid = auth.currentUser.uid;
+  const label = document.getElementById('remLabel').value.trim();
+  const dueDate = document.getElementById('remDate').value;
+  if(!label || !dueDate){ alert('Both a label and a due date are needed.'); return; }
+  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('reminders').add({
+    label, dueDate, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    closeAddReminder();
+    loadReminders(currentVehicleId);
+  });
+}
+function deleteReminder(id){
+  if(!confirm('Delete this reminder?')) return;
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('reminders').doc(id).delete()
+    .then(()=> loadReminders(currentVehicleId));
+}
+function loadReminders(vehicleId){
+  const uid = auth.currentUser.uid;
+  return db.collection('users').doc(uid).collection('vehicles').doc(vehicleId).collection('reminders')
+    .orderBy('dueDate','asc').get().then(snap=>{
+      remindersCache = [];
+      snap.forEach(doc => remindersCache.push({id:doc.id, ...doc.data()}));
+      renderReminderList();
+      refreshReminderBanner();
+    });
+}
+function renderReminderList(){
+  const wrap = document.getElementById('reminderListBox');
+  if(!remindersCache.length){
+    wrap.innerHTML = '<div class="empty-state"><p>No standalone reminders set. Service records with a "next due" date show up here too.</p></div>';
+    return;
+  }
+  wrap.innerHTML = remindersCache.map(r => `
+    <div class="reminder-list-row">
+      <span>${r.label} — <b>${r.dueDate}</b></span>
+      <button class="icon-btn danger" title="Delete" onclick="deleteReminder('${r.id}')">✕</button>
+    </div>
+  `).join('');
+}
+// Merges standalone reminders + any record "next due" dates into the one banner at the top of the vehicle page
+function refreshReminderBanner(){
   const slot = document.getElementById('reminderSlot');
-  const withDue = records.filter(r=>r.nextDue).sort((a,b)=> a.nextDue.localeCompare(b.nextDue));
-  if(!withDue.length){ slot.innerHTML=''; return; }
-  const next = withDue[0];
+  if(!slot) return;
+  const items = [];
+  recordsCache.forEach(r => { if(r.nextDue) items.push({label: `Next: ${r.issue}`, dueDate: r.nextDue}); });
+  remindersCache.forEach(r => items.push({label: r.label, dueDate: r.dueDate}));
+  if(!items.length){ slot.innerHTML=''; return; }
+  items.sort((a,b)=> a.dueDate.localeCompare(b.dueDate));
+  const next = items[0];
   const today = new Date().toISOString().slice(0,10);
-  const daysAway = Math.round((new Date(next.nextDue) - new Date(today)) / 86400000);
+  const daysAway = Math.round((new Date(next.dueDate) - new Date(today)) / 86400000);
   if(daysAway < 0){
-    slot.innerHTML = `<div class="reminder-banner overdue"><span><b>Overdue:</b> next service was due ${next.nextDue}.</span></div>`;
+    slot.innerHTML = `<div class="reminder-banner overdue"><span><b>Overdue:</b> ${next.label} was due ${next.dueDate}.</span></div>`;
   } else if(daysAway <= 14){
-    slot.innerHTML = `<div class="reminder-banner upcoming"><span><b>Coming up:</b> next service due ${next.nextDue} (${daysAway} day${daysAway===1?'':'s'} away).</span></div>`;
+    slot.innerHTML = `<div class="reminder-banner upcoming"><span><b>Coming up:</b> ${next.label} due ${next.dueDate} (${daysAway} day${daysAway===1?'':'s'} away).</span></div>`;
   } else {
     slot.innerHTML = '';
   }
 }
 
+/* ---------- Expense insights ---------- */
+function renderExpenseInsights(records){
+  const box = document.getElementById('expenseInsightsBox');
+  const withCost = records.filter(r=>r.cost);
+  if(!withCost.length){
+    box.innerHTML = '<div class="empty-state"><p>Log a service with a cost to see spend insights here.</p></div>';
+    return;
+  }
+  const total = withCost.reduce((s,r)=>s+r.cost,0);
+  const byCategory = {};
+  withCost.forEach(r=>{ const c = r.category||'Other'; byCategory[c] = (byCategory[c]||0) + r.cost; });
+  const maxCat = Math.max(...Object.values(byCategory));
+
+  const byMonth = {};
+  withCost.forEach(r=>{
+    const m = r.date ? r.date.slice(0,7) : 'Unknown';
+    byMonth[m] = (byMonth[m]||0) + r.cost;
+  });
+  const months = Object.keys(byMonth).filter(m=>m!=='Unknown').sort().slice(-6);
+  const maxMonth = Math.max(...months.map(m=>byMonth[m]), 1);
+
+  let html = `<div style="margin-bottom:18px;"><span style="display:block;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Total spent on this vehicle</span><span style="font-family:'Oswald',sans-serif;font-size:24px;">₦${total.toLocaleString()}</span></div>`;
+
+  html += `<div style="margin-bottom:18px;"><h4 style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">By category</h4>`;
+  Object.keys(byCategory).sort((a,b)=>byCategory[b]-byCategory[a]).forEach(cat=>{
+    const pct = Math.round((byCategory[cat]/maxCat)*100);
+    html += `<div class="cat-bar-row"><div class="cat-bar-label"><span>${cat}</span><span class="camt">₦${byCategory[cat].toLocaleString()}</span></div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;"></div></div></div>`;
+  });
+  html += `</div>`;
+
+  if(months.length > 1){
+    html += `<div><h4 style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;">Last few months</h4><div class="month-bars">`;
+    months.forEach(m=>{
+      const h = Math.max(4, Math.round((byMonth[m]/maxMonth)*100));
+      const label = m.slice(5,7)+'/'+m.slice(2,4);
+      html += `<div class="month-bar-col"><div class="month-bar" style="height:${h}%;" title="₦${byMonth[m].toLocaleString()}"></div><div class="month-bar-label">${label}</div></div>`;
+    });
+    html += `</div></div>`;
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- CSV export ---------- */
+function exportRecordsCSV(){
+  if(!recordsCache.length){ alert('No records to export yet.'); return; }
+  const v = vehiclesCache.find(x=>x.id===currentVehicleId);
+  const headers = ['Date','Mechanic','Issue','Category','Mileage (km)','Cost (NGN)','Resurfaced','Next Due'];
+  const rows = recordsCache.map(r => [
+    r.date||'', (r.mechanic||'').replace(/,/g,';'), (r.issue||'').replace(/,/g,';'), r.category||'',
+    r.mileage||'', r.cost||'', r.resurfaced?'Yes':'No', r.nextDue||''
+  ]);
+  const csv = [headers.join(','), ...rows.map(row=>row.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${v?v.make+'-'+v.model:'vehicle'}-service-history.csv`.replace(/\s+/g,'-');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- PDF export (uses the browser's own print-to-PDF) ---------- */
+function printVehicleReport(){
+  if(!recordsCache.length){ alert('No records to print yet.'); return; }
+  const v = vehiclesCache.find(x=>x.id===currentVehicleId);
+  document.getElementById('printMeta').textContent = `${v.make} ${v.model} (${v.year}) ${v.plate?'· Plate: '+v.plate:''} — printed ${new Date().toLocaleDateString()}`;
+  const tbody = document.getElementById('printTableBody');
+  let total = 0;
+  tbody.innerHTML = recordsCache.map(r=>{
+    total += r.cost||0;
+    return `<tr><td>${r.date||''}</td><td>${r.mechanic||''}</td><td>${r.issue||''}</td><td>${r.category||''}</td><td>${r.mileage?Number(r.mileage).toLocaleString():''}</td><td>${r.cost?'₦'+Number(r.cost).toLocaleString():''}</td></tr>`;
+  }).join('');
+  document.getElementById('printTotal').textContent = '₦'+total.toLocaleString();
+  window.print();
+}
+
+/* ---------- Dashboard (home view — aggregates across all vehicles) ---------- */
+function loadDashboard(){
+  const uid = auth.currentUser.uid;
+  document.getElementById('statVehicles').textContent = vehiclesCache.length;
+  if(!vehiclesCache.length){
+    document.getElementById('statSpend').textContent = '₦0';
+    document.getElementById('statDue').textContent = '0';
+    document.getElementById('dashReminderList').innerHTML = '<div class="empty-state"><p>Add your first vehicle to get started.</p></div>';
+    document.getElementById('dashVehicleList').innerHTML = '<div class="empty-state"><p>No vehicles yet.</p></div>';
+    return;
+  }
+  const fetches = vehiclesCache.map(v => {
+    const vRef = db.collection('users').doc(uid).collection('vehicles').doc(v.id);
+    return Promise.all([ vRef.collection('records').get(), vRef.collection('reminders').get() ])
+      .then(([recSnap, remSnap])=>{
+        const records = []; recSnap.forEach(d=>records.push({id:d.id, ...d.data()}));
+        const reminders = []; remSnap.forEach(d=>reminders.push({id:d.id, ...d.data()}));
+        return { vehicle: v, records, reminders };
+      });
+  });
+
+  Promise.all(fetches).then(results=>{
+    let totalSpend = 0;
+    const dueItems = [];
+    const vehicleRows = [];
+
+    results.forEach(({vehicle, records, reminders})=>{
+      let vSpend = 0;
+      records.forEach(r=>{
+        if(r.cost) vSpend += r.cost;
+        if(r.nextDue) dueItems.push({vehicle: `${vehicle.make} ${vehicle.model}`, vehicleId: vehicle.id, label: `Next: ${r.issue}`, dueDate: r.nextDue});
+      });
+      reminders.forEach(r=> dueItems.push({vehicle: `${vehicle.make} ${vehicle.model}`, vehicleId: vehicle.id, label: r.label, dueDate: r.dueDate}));
+      totalSpend += vSpend;
+      vehicleRows.push({vehicle, spend: vSpend});
+    });
+
+    document.getElementById('statSpend').textContent = '₦'+totalSpend.toLocaleString();
+
+    const today = new Date().toISOString().slice(0,10);
+    const dueSorted = dueItems
+      .map(d=>({...d, daysAway: Math.round((new Date(d.dueDate)-new Date(today))/86400000)}))
+      .filter(d=> d.daysAway <= 14)
+      .sort((a,b)=> a.daysAway - b.daysAway);
+
+    const statDueEl = document.getElementById('statDue');
+    statDueEl.textContent = dueSorted.length;
+    statDueEl.className = dueSorted.some(d=>d.daysAway<0) ? 'sval warn' : 'sval';
+
+    const remWrap = document.getElementById('dashReminderList');
+    if(!dueSorted.length){
+      remWrap.innerHTML = '<div class="empty-state"><p>Nothing due in the next 2 weeks.</p></div>';
+    } else {
+      remWrap.innerHTML = dueSorted.map(d=>`
+        <div class="dash-reminder-row ${d.daysAway<0?'overdue':'upcoming'}">
+          <span><span class="dveh">${d.vehicle}</span> — ${d.label} ${d.daysAway<0 ? `(overdue, was due ${d.dueDate})` : `(due ${d.dueDate}, ${d.daysAway} day${d.daysAway===1?'':'s'})`}</span>
+          <button onclick="selectVehicle('${d.vehicleId}')">View</button>
+        </div>
+      `).join('');
+    }
+
+    const vWrap = document.getElementById('dashVehicleList');
+    vWrap.innerHTML = vehicleRows.map(({vehicle, spend})=>`
+      <div class="dash-vehicle-row" onclick="selectVehicle('${vehicle.id}')">
+        <div>
+          <div class="dvname">${vehicle.make} ${vehicle.model} <span style="opacity:.6;">'${String(vehicle.year).slice(-2)}</span></div>
+          <div class="dvsub">${vehicle.plate||'No plate on file'}</div>
+        </div>
+        <div class="dvspend">₦${spend.toLocaleString()}</div>
+      </div>
+    `).join('');
+  });
+}
+
 /* ============================================================
    INIT
    ============================================================ */
+initTheme();
 populateObdSelect(document.getElementById('obdHeroSelect'));
 populateObdSelect(document.getElementById('obdAppSelect'));
 </script>
