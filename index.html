@@ -27,6 +27,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<!-- Tesseract.js — client-side OCR. Runs entirely in the browser; the photo
+     is never uploaded anywhere, only read locally to help fill the form. -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
   :root{
@@ -313,6 +316,31 @@
   }
   .badge-resurfaced{background:rgba(181,74,60,0.15);color:var(--rust);}
   .badge-resolved{background:rgba(31,111,107,0.15);color:var(--teal-deep);}
+  .badge-pass{background:rgba(31,111,107,0.15);color:var(--teal-deep);}
+  .badge-fail{background:rgba(181,74,60,0.15);color:var(--rust);}
+  .badge-minor{background:rgba(232,137,12,0.15);color:var(--amber-deep);}
+  .badge-major{background:rgba(181,74,60,0.15);color:var(--rust);}
+
+  /* ---------- Inspection & Compliance ---------- */
+  .inspection-item{border-bottom:1px solid var(--line);padding:14px 2px;}
+  .inspection-item:last-child{border-bottom:none;}
+  .inspection-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+  .inspection-date{font-family:'Oswald',sans-serif;font-size:14px;color:var(--ink);}
+  .inspection-station{font-size:13px;color:var(--ink-soft);margin-top:2px;}
+  .inspection-defects{margin-top:8px;font-size:12.5px;color:var(--ink-soft);}
+  .inspection-defects .drow{padding:3px 0;}
+  .inspection-attach{margin-top:8px;font-size:12.5px;}
+  .inspection-attach a{color:var(--teal-deep);text-decoration:underline;}
+  .inspection-next{margin-top:6px;font-size:12.5px;color:var(--ink-soft);}
+
+  .defect-row{
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    background:var(--white);border:1px solid var(--line);border-radius:3px;padding:8px 10px;margin-bottom:8px;
+  }
+  .defect-row input[type=text]{flex:1 1 100px;padding:7px 9px;border-radius:3px;border:1px solid var(--line);font-size:13px;}
+  .defect-row select{padding:7px 9px;border-radius:3px;border:1px solid var(--line);font-size:13px;}
+  .defect-row .field-code{flex:0 1 90px;}
+  .defect-row .field-desc{flex:2 1 160px;}
 
   .empty-state{padding:30px 10px;text-align:center;color:var(--ink-soft);}
   .empty-state p{font-size:14px;margin:6px 0 0;}
@@ -751,6 +779,7 @@
           <div class="field2"><label>Model</label><input id="vModel" placeholder="e.g. Corolla"></div>
           <div class="field2"><label>Year</label><input id="vYear" placeholder="e.g. 2015"></div>
           <div class="field2"><label>Plate number</label><input id="vPlate" placeholder="e.g. LND-234-XY"></div>
+          <div class="field2"><label>Chassis / VIN — optional</label><input id="vChassis" placeholder="e.g. 4T1BE46K37U110985"></div>
           <div class="field2"><label>Current mileage (km) — optional</label><input type="number" id="vMileage" placeholder="e.g. 84000"></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:10px;">
@@ -869,6 +898,62 @@
           </div>
           <div id="recordList"></div>
         </div>
+
+        <!-- ============================================================
+             INSPECTION & COMPLIANCE — its own full section, separate
+             from service history. Covers government roadworthiness
+             inspections (e.g. Lagos LACVIS), not repairs.
+             ============================================================ -->
+        <div class="card" id="inspectionSection">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
+            <h3 style="margin:0;">Inspection &amp; Compliance</h3>
+            <button class="btn btn-teal btn-small" onclick="openAddInspection()">+ Log an inspection</button>
+          </div>
+          <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">Government roadworthiness checks — separate from repairs and servicing above.</p>
+
+          <!-- Add/edit inspection form -->
+          <div class="card hidden" id="addInspectionCard" style="background:var(--paper-2);">
+            <h3 id="inspectionFormTitle">Log an inspection</h3>
+            <div class="form-grid">
+              <div class="field2"><label>Inspection date</label><input type="date" id="iDate" onchange="suggestInspectionNextDue()"></div>
+              <div class="field2"><label>Result</label>
+                <select id="iResult" onchange="suggestInspectionNextDue()">
+                  <option value="Pass">Pass</option>
+                  <option value="Fail">Fail</option>
+                </select>
+              </div>
+              <div class="field2"><label>Inspecting station</label><input id="iStation" placeholder="e.g. LACVIS Unilag"></div>
+              <div class="field2"><label>Certification officer</label><input id="iOfficer" placeholder="e.g. Obaraye"></div>
+              <div class="field2"><label>Reference number</label><input id="iRef" placeholder="e.g. 202609240047"></div>
+              <div class="field2"><label>Next inspection due</label><input type="date" id="iNextDue"></div>
+              <div class="field2 full">
+                <label>Scan a photo of the report to auto-fill the fields above — optional</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <input type="file" id="iPhoto" accept="image/*">
+                  <button type="button" class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="scanInspectionPhoto()">Scan &amp; fill</button>
+                </div>
+                <p style="font-size:12px;color:var(--ink-soft);margin-top:6px;">The photo is read on your own device and never uploaded or stored anywhere. Printed text (date, station, reference number, result) scans reasonably well — handwritten signatures and the defects table don't, so double-check everything before saving.</p>
+              </div>
+            </div>
+
+            <div style="margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label style="font-size:12.5px;color:var(--ink-soft);">Defects found (optional)</label>
+                <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="addDefectRow()">+ Add defect</button>
+              </div>
+              <div id="defectRows"></div>
+            </div>
+
+            <div id="inspectionScanStatus" style="font-size:12.5px;color:var(--teal-deep);margin-top:10px;"></div>
+
+            <div style="margin-top:14px;display:flex;gap:10px;">
+              <button class="btn btn-amber btn-small" onclick="saveInspection()" id="inspectionSaveBtn">Save inspection</button>
+              <button class="btn btn-ghost btn-small" style="color:var(--ink-soft);border-color:var(--line);" onclick="closeAddInspection()">Cancel</button>
+            </div>
+          </div>
+
+          <div id="inspectionList"></div>
+        </div>
       </div>
 
       <!-- OBD tool panel -->
@@ -900,12 +985,18 @@
 
       <!-- Print-only report (hidden on screen, shown only when printing) -->
       <div id="printReport">
-        <h1>HB AutoTrail — Service History</h1>
+        <h1>HB AutoTrail — Vehicle Report</h1>
         <div class="pr-meta" id="printMeta"></div>
+        <h2 style="font-family:'Oswald',sans-serif;font-size:16px;margin:18px 0 8px;">Service History</h2>
         <table>
           <thead><tr><th>Date</th><th>Mechanic</th><th>Issue</th><th>Category</th><th>Mileage</th><th>Cost</th></tr></thead>
           <tbody id="printTableBody"></tbody>
           <tfoot><tr><td colspan="5">Total</td><td id="printTotal"></td></tr></tfoot>
+        </table>
+        <h2 style="font-family:'Oswald',sans-serif;font-size:16px;margin:22px 0 8px;">Inspection &amp; Compliance History</h2>
+        <table>
+          <thead><tr><th>Date</th><th>Station</th><th>Officer</th><th>Ref Number</th><th>Result</th><th>Defects</th><th>Next Due</th></tr></thead>
+          <tbody id="printInspectionBody"></tbody>
         </table>
       </div>
 
@@ -1223,7 +1314,7 @@ function openAddVehicle(){
   editingVehicleId = null;
   document.getElementById('vehicleFormTitle').textContent = 'Add a vehicle';
   document.getElementById('vehicleSaveBtn').textContent = 'Save vehicle';
-  ['vMake','vModel','vYear','vPlate','vMileage'].forEach(id=>document.getElementById(id).value='');
+  ['vMake','vModel','vYear','vPlate','vChassis','vMileage'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('addVehicleCard').classList.remove('hidden');
 }
 function closeAddVehicle(){ document.getElementById('addVehicleCard').classList.add('hidden'); editingVehicleId=null; }
@@ -1238,6 +1329,7 @@ function editVehicle(){
   document.getElementById('vModel').value = v.model || '';
   document.getElementById('vYear').value = v.year || '';
   document.getElementById('vPlate').value = v.plate || '';
+  document.getElementById('vChassis').value = v.chassis || '';
   document.getElementById('vMileage').value = v.mileage || '';
   document.getElementById('addVehicleCard').classList.remove('hidden');
   document.getElementById('addVehicleCard').scrollIntoView({behavior:'smooth', block:'start'});
@@ -1248,16 +1340,17 @@ function saveVehicle(){
   const model = document.getElementById('vModel').value.trim();
   const year = document.getElementById('vYear').value.trim();
   const plate = document.getElementById('vPlate').value.trim();
+  const chassis = document.getElementById('vChassis').value.trim();
   const mileage = document.getElementById('vMileage').value;
   if(!make || !model){ alert('At least make and model are needed.'); return; }
   const uid = auth.currentUser.uid;
-  const data = { make, model, year, plate, mileage: mileage?Number(mileage):null };
+  const data = { make, model, year, plate, chassis, mileage: mileage?Number(mileage):null };
   const ref = db.collection('users').doc(uid).collection('vehicles');
   const savePromise = editingVehicleId
     ? ref.doc(editingVehicleId).update(data)
     : ref.add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
   savePromise.then(()=>{
-    ['vMake','vModel','vYear','vPlate','vMileage'].forEach(id=>document.getElementById(id).value='');
+    ['vMake','vModel','vYear','vPlate','vChassis','vMileage'].forEach(id=>document.getElementById(id).value='');
     const wasEditing = editingVehicleId;
     editingVehicleId = null;
     closeAddVehicle();
@@ -1317,9 +1410,10 @@ function selectVehicle(id){
   document.getElementById('vehiclePanel').classList.remove('hidden');
   const v = vehiclesCache.find(x=>x.id===id);
   document.getElementById('vTitle').textContent = `${v.make} ${v.model} (${v.year})`;
-  document.getElementById('vMeta').textContent = [v.plate?`Plate: ${v.plate}`:null, v.mileage?`${Number(v.mileage).toLocaleString()} km`:null].filter(Boolean).join(' · ') || '—';
+  document.getElementById('vMeta').textContent = [v.plate?`Plate: ${v.plate}`:null, v.chassis?`VIN: ${v.chassis}`:null, v.mileage?`${Number(v.mileage).toLocaleString()} km`:null].filter(Boolean).join(' · ') || '—';
   loadRecords(id);
   loadReminders(id);
+  loadInspections(id);
 }
 
 /* ---------- Service records ---------- */
@@ -1419,6 +1513,224 @@ function renderRecords(records){
   `).join('');
 }
 
+/* ---------- Inspection & Compliance ---------- */
+let inspectionsCache = [];
+let editingInspectionId = null;
+let defectRowSeq = 0;
+
+function addDefectRow(prefill){
+  const id = 'drow-' + (defectRowSeq++);
+  const wrap = document.getElementById('defectRows');
+  const row = document.createElement('div');
+  row.className = 'defect-row';
+  row.id = id;
+  const codeVal = prefill && prefill.code ? prefill.code.replace(/"/g,'&quot;') : '';
+  const descVal = prefill && prefill.description ? prefill.description.replace(/"/g,'&quot;') : '';
+  const sevMinor = !prefill || prefill.severity !== 'Major';
+  row.innerHTML = `
+    <input type="text" class="field-code" placeholder="Code (e.g. F2002)" value="${codeVal}">
+    <select class="field-severity">
+      <option value="Minor" ${sevMinor?'selected':''}>Minor</option>
+      <option value="Major" ${!sevMinor?'selected':''}>Major</option>
+    </select>
+    <input type="text" class="field-desc" placeholder="Description" value="${descVal}">
+    <button type="button" class="icon-btn danger" title="Remove" onclick="document.getElementById('${id}').remove()">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+function collectDefects(){
+  const rows = document.querySelectorAll('#defectRows .defect-row');
+  const defects = [];
+  rows.forEach(row=>{
+    const code = row.querySelector('.field-code').value.trim();
+    const severity = row.querySelector('.field-severity').value;
+    const description = row.querySelector('.field-desc').value.trim();
+    if(code || description){ defects.push({code, severity, description}); }
+  });
+  return defects;
+}
+function clearDefectRows(){ document.getElementById('defectRows').innerHTML = ''; }
+
+function openAddInspection(){
+  editingInspectionId = null;
+  document.getElementById('inspectionFormTitle').textContent = 'Log an inspection';
+  document.getElementById('inspectionSaveBtn').textContent = 'Save inspection';
+  ['iDate','iStation','iOfficer','iRef','iNextDue'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('iResult').value = 'Pass';
+  document.getElementById('iPhoto').value = '';
+  document.getElementById('inspectionScanStatus').textContent = '';
+  clearDefectRows();
+  document.getElementById('addInspectionCard').classList.remove('hidden');
+  document.getElementById('addInspectionCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function closeAddInspection(){
+  document.getElementById('addInspectionCard').classList.add('hidden');
+  editingInspectionId = null;
+}
+
+function editInspection(id){
+  const insp = inspectionsCache.find(x=>x.id===id);
+  if(!insp) return;
+  editingInspectionId = id;
+  document.getElementById('inspectionFormTitle').textContent = 'Edit inspection';
+  document.getElementById('inspectionSaveBtn').textContent = 'Save changes';
+  document.getElementById('iDate').value = insp.date || '';
+  document.getElementById('iResult').value = insp.result || 'Pass';
+  document.getElementById('iStation').value = insp.station || '';
+  document.getElementById('iOfficer').value = insp.officer || '';
+  document.getElementById('iRef').value = insp.refNumber || '';
+  document.getElementById('iNextDue').value = insp.nextDue || '';
+  document.getElementById('iPhoto').value = '';
+  clearDefectRows();
+  (insp.defects||[]).forEach(d=>addDefectRow(d));
+  document.getElementById('inspectionScanStatus').textContent = '';
+  document.getElementById('addInspectionCard').classList.remove('hidden');
+  document.getElementById('addInspectionCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Auto-suggests next inspection due ~11 months after a Pass — Lagos LACVIS
+// roadworthiness renewal runs on roughly a 12-month cycle, so this gives a
+// small buffer before the deadline. Never overwrites a value already typed.
+function suggestInspectionNextDue(){
+  const date = document.getElementById('iDate').value;
+  const result = document.getElementById('iResult').value;
+  const nextDueField = document.getElementById('iNextDue');
+  if(date && result === 'Pass' && !nextDueField.value){
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + 11);
+    nextDueField.value = d.toISOString().slice(0,10);
+  }
+}
+
+/* ============================================================
+   SCAN & FILL — client-side OCR (Tesseract.js). The photo is read
+   entirely in the browser and never uploaded or saved anywhere;
+   only the extracted text touches the form fields below.
+   Scoped honestly: printed fields (date, station, ref number,
+   pass/fail) scan reasonably well. Handwritten signatures and the
+   defects table are NOT attempted here — too unreliable to trust.
+   ============================================================ */
+function extractInspectionDate(text){
+  const m = text.match(/(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}
+function extractInspectionStation(text){
+  const m = text.match(/STATION\s*NAME\s*[:\-]?\s*\n?\s*([A-Za-z][A-Za-z .'-]{1,30})/i);
+  return m ? m[1].trim() : null;
+}
+function extractInspectionRef(text){
+  let m = text.match(/REF\s*[.\s]*NUMBER\s*[:\-]?\s*\n?\s*(\d{6,15})/i);
+  if(m) return m[1];
+  m = text.match(/REF[^\d]{0,15}(\d{8,15})/i);
+  return m ? m[1] : null;
+}
+function extractInspectionResult(text){
+  if(/\bPASSED\b/i.test(text)) return 'Pass';
+  if(/\bFAILED\b/i.test(text)) return 'Fail';
+  return null;
+}
+
+function scanInspectionPhoto(){
+  const file = document.getElementById('iPhoto').files[0];
+  const statusEl = document.getElementById('inspectionScanStatus');
+  if(!file){ alert('Choose a photo first, then tap Scan & fill.'); return; }
+  if(typeof Tesseract === 'undefined'){ statusEl.textContent = "Scanner didn't load — check your connection and try again, or just fill the fields in by hand."; return; }
+
+  statusEl.textContent = 'Scanning… this can take a few seconds.';
+  Tesseract.recognize(file, 'eng').then(({ data: { text } })=>{
+    let found = 0;
+    const date = extractInspectionDate(text);
+    if(date){ document.getElementById('iDate').value = date; found++; }
+    const station = extractInspectionStation(text);
+    if(station){ document.getElementById('iStation').value = station; found++; }
+    const ref = extractInspectionRef(text);
+    if(ref){ document.getElementById('iRef').value = ref; found++; }
+    const result = extractInspectionResult(text);
+    if(result){ document.getElementById('iResult').value = result; found++; }
+    if(date || result){ suggestInspectionNextDue(); }
+
+    statusEl.textContent = found
+      ? `Scanned — filled ${found} field${found===1?'':'s'} from the photo. Check everything below before saving.`
+      : "Couldn't confidently read this photo — try a clearer, well-lit shot, or just fill the fields in by hand.";
+  }).catch(err=>{
+    statusEl.textContent = 'Scan failed: ' + err.message + ' — you can still fill the fields in by hand.';
+  });
+}
+
+function saveInspection(){
+  const uid = auth.currentUser.uid;
+  const date = document.getElementById('iDate').value;
+  const result = document.getElementById('iResult').value;
+  const station = document.getElementById('iStation').value.trim();
+  const officer = document.getElementById('iOfficer').value.trim();
+  const refNumber = document.getElementById('iRef').value.trim();
+  const nextDue = document.getElementById('iNextDue').value;
+  const defects = collectDefects();
+  const file = document.getElementById('iPhoto').files[0]; // used only for on-device OCR — never saved or uploaded
+  if(!date){ alert('Inspection date is required.'); return; }
+
+  const coll = db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('inspections');
+  const docRef = editingInspectionId ? coll.doc(editingInspectionId) : coll.doc();
+  const data = { date, result, station, officer, refNumber, nextDue: nextDue||null, defects };
+
+  const savePromise = editingInspectionId
+    ? docRef.update(data)
+    : docRef.set({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+  savePromise.then(()=>{
+    closeAddInspection();
+    loadInspections(currentVehicleId);
+  }).catch(err=>{ alert('Could not save: '+err.message); });
+}
+
+function deleteInspection(id){
+  if(!confirm('Delete this inspection record? This cannot be undone.')) return;
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).collection('vehicles').doc(currentVehicleId).collection('inspections').doc(id).delete()
+    .then(()=> loadInspections(currentVehicleId));
+}
+
+function loadInspections(vehicleId){
+  const uid = auth.currentUser.uid;
+  return db.collection('users').doc(uid).collection('vehicles').doc(vehicleId).collection('inspections')
+    .orderBy('date','desc').get().then(snap=>{
+      inspectionsCache = [];
+      snap.forEach(doc => inspectionsCache.push({id:doc.id, ...doc.data()}));
+      renderInspectionList();
+      refreshReminderBanner();
+    });
+}
+
+function renderInspectionList(){
+  const wrap = document.getElementById('inspectionList');
+  if(!inspectionsCache.length){
+    wrap.innerHTML = '<div class="empty-state"><p>No inspections logged yet. Add your first roadworthiness or compliance check above.</p></div>';
+    return;
+  }
+  wrap.innerHTML = inspectionsCache.map(insp=>{
+    const defectsHtml = (insp.defects && insp.defects.length)
+      ? `<div class="inspection-defects">${insp.defects.map(d=>`<div class="drow"><span class="badge badge-${(d.severity||'Minor').toLowerCase()}">${d.severity||'Minor'}</span> ${d.code?d.code+' — ':''}${d.description||''}</div>`).join('')}</div>`
+      : '';
+    const nextHtml = insp.nextDue ? `<div class="inspection-next">Next due: ${insp.nextDue}</div>` : '';
+    const resultClass = (insp.result||'').toLowerCase();
+    return `
+      <div class="inspection-item">
+        <div class="inspection-top">
+          <div>
+            <div class="inspection-date">${insp.date} <span class="badge badge-${resultClass}">${insp.result||''}</span></div>
+            <div class="inspection-station">${insp.station||'Station not recorded'}${insp.officer?' · '+insp.officer:''}${insp.refNumber?' · Ref: '+insp.refNumber:''}</div>
+          </div>
+          <div class="logline-actions">
+            <button class="icon-btn" title="Edit" onclick="editInspection('${insp.id}')">✎</button>
+            <button class="icon-btn danger" title="Delete" onclick="deleteInspection('${insp.id}')">✕</button>
+          </div>
+        </div>
+        ${defectsHtml}
+        ${nextHtml}
+      </div>
+    `;
+  }).join('');
+}
+
 /* ---------- Standalone reminders ---------- */
 function openAddReminder(){
   ['remLabel','remDate'].forEach(id=>document.getElementById(id).value='');
@@ -1474,6 +1786,7 @@ function refreshReminderBanner(){
   const items = [];
   recordsCache.forEach(r => { if(r.nextDue) items.push({label: `Next: ${r.issue}`, dueDate: r.nextDue}); });
   remindersCache.forEach(r => items.push({label: r.label, dueDate: r.dueDate}));
+  inspectionsCache.forEach(insp => { if(insp.nextDue) items.push({label: 'Next inspection due', dueDate: insp.nextDue}); });
   if(!items.length){ slot.innerHTML=''; return; }
   items.sort((a,b)=> a.dueDate.localeCompare(b.dueDate));
   const next = items[0];
@@ -1553,9 +1866,9 @@ function exportRecordsCSV(){
 
 /* ---------- PDF export (uses the browser's own print-to-PDF) ---------- */
 function printVehicleReport(){
-  if(!recordsCache.length){ alert('No records to print yet.'); return; }
+  if(!recordsCache.length && !inspectionsCache.length){ alert('No service or inspection records to print yet.'); return; }
   const v = vehiclesCache.find(x=>x.id===currentVehicleId);
-  document.getElementById('printMeta').textContent = `${v.make} ${v.model} (${v.year}) ${v.plate?'· Plate: '+v.plate:''} — printed ${new Date().toLocaleDateString()}`;
+  document.getElementById('printMeta').textContent = `${v.make} ${v.model} (${v.year}) ${v.plate?'· Plate: '+v.plate:''}${v.chassis?' · VIN: '+v.chassis:''} — printed ${new Date().toLocaleDateString()}`;
   const tbody = document.getElementById('printTableBody');
   let total = 0;
   tbody.innerHTML = recordsCache.map(r=>{
@@ -1563,6 +1876,13 @@ function printVehicleReport(){
     return `<tr><td>${r.date||''}</td><td>${r.mechanic||''}</td><td>${r.issue||''}</td><td>${r.category||''}</td><td>${r.mileage?Number(r.mileage).toLocaleString():''}</td><td>${r.cost?'₦'+Number(r.cost).toLocaleString():''}</td></tr>`;
   }).join('');
   document.getElementById('printTotal').textContent = '₦'+total.toLocaleString();
+
+  const inspBody = document.getElementById('printInspectionBody');
+  inspBody.innerHTML = inspectionsCache.length ? inspectionsCache.map(insp=>{
+    const defectsSummary = (insp.defects||[]).map(d=>`${d.code?d.code+': ':''}${d.description||''}`).join('; ');
+    return `<tr><td>${insp.date||''}</td><td>${insp.station||''}</td><td>${insp.officer||''}</td><td>${insp.refNumber||''}</td><td>${insp.result||''}</td><td>${defectsSummary}</td><td>${insp.nextDue||''}</td></tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#888;">No inspections logged</td></tr>';
+
   window.print();
 }
 
@@ -1609,11 +1929,12 @@ function loadDashboard(){
 
   const fetches = vehiclesCache.map(v => {
     const vRef = db.collection('users').doc(uid).collection('vehicles').doc(v.id);
-    return Promise.all([ vRef.collection('records').get(), vRef.collection('reminders').get() ])
-      .then(([recSnap, remSnap])=>{
+    return Promise.all([ vRef.collection('records').get(), vRef.collection('reminders').get(), vRef.collection('inspections').get() ])
+      .then(([recSnap, remSnap, inspSnap])=>{
         const records = []; recSnap.forEach(d=>records.push({id:d.id, ...d.data()}));
         const reminders = []; remSnap.forEach(d=>reminders.push({id:d.id, ...d.data()}));
-        return { vehicle: v, records, reminders };
+        const inspections = []; inspSnap.forEach(d=>inspections.push({id:d.id, ...d.data()}));
+        return { vehicle: v, records, reminders, inspections };
       });
   });
 
@@ -1622,13 +1943,14 @@ function loadDashboard(){
     const dueItems = [];
     const vehicleRows = [];
 
-    results.forEach(({vehicle, records, reminders})=>{
+    results.forEach(({vehicle, records, reminders, inspections})=>{
       let vSpend = 0;
       records.forEach(r=>{
         if(r.cost) vSpend += r.cost;
         if(r.nextDue) dueItems.push({vehicle: `${vehicle.make} ${vehicle.model}`, vehicleId: vehicle.id, label: `Next: ${r.issue}`, dueDate: r.nextDue});
       });
       reminders.forEach(r=> dueItems.push({vehicle: `${vehicle.make} ${vehicle.model}`, vehicleId: vehicle.id, label: r.label, dueDate: r.dueDate}));
+      inspections.forEach(insp=>{ if(insp.nextDue) dueItems.push({vehicle: `${vehicle.make} ${vehicle.model}`, vehicleId: vehicle.id, label: 'Next inspection due', dueDate: insp.nextDue}); });
       totalSpend += vSpend;
       vehicleRows.push({vehicle, spend: vSpend});
     });
